@@ -1,0 +1,23 @@
+{
+  "name": "Raj Enterprise",
+  "short_name": "Raj Enterprise",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#3498db",
+  "description": "Stock & Sales Management for Raj Enterprise",
+  "icons": [
+    {
+      "src": "/path/to/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/path/to/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+    // Add more icon sizes for better compatibility if needed
+  ]
+}
+    
