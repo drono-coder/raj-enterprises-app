@@ -1,13 +1,11 @@
     // sw.js
     const CACHE_NAME = 'raj-enterprise-v1'; // Update version for new deployments
     const urlsToCache = [
-      "/",
-        "/index.html",
-        "/manifest.json",
-        "/assets/style.css", // adjust paths
-        "/assets/script.js",
-        "./assets/icon-192.png",
-        "./assets/icon-512.png"
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/icons/android-chrome-192x192.png",
+  "/icons/android-chrome-512x512.png",
       // Add paths to your CSS, JS, and image files
       // Example:
       // '/style.css', // If you move internal CSS to external file
