@@ -2,22 +2,13 @@
     const CACHE_NAME = 'raj-enterprise-v1'; // Update version for new deployments
 
     const urlsToCache = [
-      `/`,
-      `/index.html`,
-      `/manifest.json`,
-      `/icons/android-chrome-192x192.png`,
-      `/icons/android-chrome-512x512.png`,
-      // Add paths to your CSS, JS, and image files
-      // Example:
-      // '/style.css', // If you move internal CSS to external file
-      // '/script.js', // If you move internal JS to external file
-      'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
-      'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-      // If you have actual icon files:
-      // '/assets/icons/icon-192x192.png',
-      // '/assets/icons/icon-512x512.png',
-      // Any other custom assets like images
-    ];
+  "/raj-enterprises-app/",
+  "/raj-enterprises-app/index.html",
+  "/raj-enterprises-app/manifest.json",
+  "/raj-enterprises-app/assest/android-chrome-192x192.png",
+  "/raj-enterprises-app/assest/android-chrome-512x512.png"
+];
+
     // Install event: cache all listed assets
     self.addEventListener('install', event => {
       event.waitUntil(
