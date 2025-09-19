@@ -1,13 +1,14 @@
     // sw.js
-    const CACHE_NAME = 'raj-enterprise-v1'; // Update version for new deployments
-
+    const CACHE_NAME = "raj-enterprise-cache-v1";
+    const BASE_PATH = "/raj-enterprises-app";
+    
     const urlsToCache = [
-  "/raj-enterprises-app/",
-  "/raj-enterprises-app/index.html",
-  "/raj-enterprises-app/manifest.json",
-  "/raj-enterprises-app/assest/android-chrome-192x192.png",
-  "/raj-enterprises-app/assest/android-chrome-512x512.png"
-];
+      `${BASE_PATH}/`,
+      `${BASE_PATH}/index.html`,
+      `${BASE_PATH}/manifest.json`,
+      `${BASE_PATH}/icons/icons-192x192.png`,
+      `${BASE_PATH}/icons/icons-512x512.png`
+    ];
 
     // Install event: cache all listed assets
     self.addEventListener('install', event => {
