@@ -5,7 +5,9 @@
         "/index.html",
         "/manifest.json",
         "/assets/style.css", // adjust paths
-        "/assets/script.js"
+        "/assets/script.js",
+        "./assets/icon-192.png",
+        "./assets/icon-512.png"
       // Add paths to your CSS, JS, and image files
       // Example:
       // '/style.css', // If you move internal CSS to external file
