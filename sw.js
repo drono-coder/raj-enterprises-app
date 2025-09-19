@@ -1,13 +1,12 @@
     // sw.js
     const CACHE_NAME = 'raj-enterprise-v1'; // Update version for new deployments
-   const BASE_PATH = "/raj-enterprises-app";  // 👈 repo name
 
     const urlsToCache = [
-      `${BASE_PATH}/`,
-      `${BASE_PATH}/index.html`,
-      `${BASE_PATH}/manifest.json`,
-      `${BASE_PATH}/icons/android-chrome-192x192.png`,
-      `${BASE_PATH}/icons/android-chrome-512x512.png`,
+      `/`,
+      `/index.html`,
+      `/manifest.json`,
+      `/icons/android-chrome-192x192.png`,
+      `/icons/android-chrome-512x512.png`,
       // Add paths to your CSS, JS, and image files
       // Example:
       // '/style.css', // If you move internal CSS to external file
