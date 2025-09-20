@@ -7,6 +7,7 @@
   "theme_color": "#3498db",
   "description": "Stock & Sales Management for Raj Enterprise",
   "icons": [
+<<<<<<< HEAD
     {
       "src": "/path/to/icon-192x192.png",
       "sizes": "192x192",
@@ -20,3 +21,18 @@
   ]
 }
     
+=======
+  {
+    "src": "icons/icons-192x192.png",
+    "sizes": "192x192",
+    "type": "image/png"
+  },
+  {
+    "src": "icons/icons-512x512.png",
+    "sizes": "512x512",
+    "type": "image/png"
+  }
+]
+}
+    
+>>>>>>> 71156b581857922e7937e9e25d4f3e4338989a03

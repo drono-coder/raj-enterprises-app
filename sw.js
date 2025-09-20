@@ -1,4 +1,5 @@
     // sw.js
+<<<<<<< HEAD
     const CACHE_NAME = 'raj-enterprise-v1'; // Update version for new deployments
     const urlsToCache = [
       '/', // index.html
@@ -14,6 +15,17 @@
       // '/assets/icons/icon-192x192.png',
       // '/assets/icons/icon-512x512.png',
       // Any other custom assets like images
+=======
+    const CACHE_NAME = "raj-enterprise-cache-v1";
+    const BASE_PATH = "/raj-enterprises-app";
+    
+    const urlsToCache = [
+      `${BASE_PATH}/`,
+      `${BASE_PATH}/index.html`,
+      `${BASE_PATH}/manifest.json`,
+      `${BASE_PATH}/icons/icons-192x192.png`,
+      `${BASE_PATH}/icons/icons-512x512.png`
+>>>>>>> 71156b581857922e7937e9e25d4f3e4338989a03
     ];
 
     // Install event: cache all listed assets
@@ -79,4 +91,8 @@
         })
       );
     });
+<<<<<<< HEAD
     
+=======
+    
+>>>>>>> 71156b581857922e7937e9e25d4f3e4338989a03
