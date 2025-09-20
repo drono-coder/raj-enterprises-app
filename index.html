@@ -285,6 +285,37 @@
           border-radius: 0 0 8px 8px;
         }
     </style>
+    <!-- Firebase setup -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot } 
+    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAOW9WOH4i6_T29Kfz0fEW-HIr0Fih_yjU",
+    authDomain: "raj-enterprises-4a9b1.firebaseapp.com",
+    projectId: "raj-enterprises-4a9b1",
+    storageBucket: "raj-enterprises-4a9b1.firebasestorage.app",
+    messagingSenderId: "1085563539961",
+    appId: "1:1085563539961:web:2043adf90fe116f055ad28"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Optional: Example functions
+  onSnapshot(collection(db, "sales"), (snapshot) => {
+    const sales = snapshot.docs.map(doc => doc.data());
+    console.log("Live sales:", sales);
+    // Update your UI accordingly
+  });
+
+  // Function to add data
+  async function addSale(saleData) {
+    await addDoc(collection(db, "sales"), saleData);
+  }
+</script>
+
 </head>
 <body>
 <div class="container">
@@ -2905,5 +2936,6 @@
 </body>
 
 </html>
+
 
 
