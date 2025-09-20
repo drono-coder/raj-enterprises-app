@@ -1,7 +1,7 @@
 // sw.js - Clean Service Worker for Raj Enterprise App
 
 const CACHE_NAME = 'raj-enterprise-v1'; // Change version on new deployments
-const BASE_PATH = '/raj-enterprises-app'; // Change if app is deployed in subdirectory
+const BASE_PATH = ''; // Set to '' for root deployment on GitHub Pages
 
 const urlsToCache = [
   `${BASE_PATH}/`,
