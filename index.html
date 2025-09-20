@@ -1594,6 +1594,18 @@
           console.error(err);
           showNotification('Error recording sale', 'error');
         }
+        currentBillItems = [];
+        updateBillDisplay();
+        await loadSales();
+        await loadProducts();
+        await loadLowStockAlerts();
+        computeDashboardMetrics();
+      } catch (err) {
+        console.error(err);
+        showNotification('Error recording sale', 'error');
+      }
+    }
+    
     // Function to generate bill for existing sale
     async function generateBillForExistingSale(saleId) {
       try {
@@ -2026,6 +2038,7 @@
           console.error('Error deleting restock:', err);
           showNotification('Error deleting restock record', 'error');
         }
+      }
 
     // NEW: Function to display restock history
     async function displayRestockHistory(restocks) {
