@@ -8,20 +8,9 @@
   <meta name="theme-color" content="#3498db">
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-  <script>
-    // Your Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAOW9WOH4i6_T29Kfz0fEW-HIr0Fih_yjU",
-      authDomain: "raj-enterprises-4a9b1.firebaseapp.com",
-      projectId: "raj-enterprises-4a9b1",
-      storageBucket: "raj-enterprises-4a9b1.appspot.com",
-      messagingSenderId: "1085563539961",
-      appId: "1:1085563539961:web:2043adf90fe116f055ad28"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const firestore = firebase.firestore();
-  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
 
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
@@ -865,70 +854,6 @@
   </div>
 
   <script>
-  // ========== Firestore Sync Helpers ==========
-  // PRODUCTS
-  async function syncProductsFromFirestore() {
-    const snapshot = await firestore.collection('products').get();
-    const products = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-    // Clear local and re-add
-    const store = tx(['products'], 'readwrite').objectStore('products');
-    await promisifyRequest(store.clear());
-    for (const p of products) {
-      await promisifyRequest(store.put({ ...p, id: isNaN(Number(p.id)) ? Date.now() : Number(p.id) }));
-    }
-    return products;
-  }
-
-  async function syncProductToFirestore(product) {
-    const ref = firestore.collection('products').doc(String(product.id));
-    await ref.set(product);
-  }
-
-  async function deleteProductFromFirestore(productId) {
-    await firestore.collection('products').doc(String(productId)).delete();
-  }
-
-  // SALES
-  async function syncSalesFromFirestore() {
-    const snapshot = await firestore.collection('sales').get();
-    const sales = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-    const store = tx(['sales'], 'readwrite').objectStore('sales');
-    await promisifyRequest(store.clear());
-    for (const s of sales) {
-      await promisifyRequest(store.put({ ...s, id: isNaN(Number(s.id)) ? Date.now() : Number(s.id) }));
-    }
-    return sales;
-  }
-
-  async function syncSaleToFirestore(sale) {
-    const ref = firestore.collection('sales').doc(String(sale.id));
-    await ref.set(sale);
-  }
-
-  async function deleteSaleFromFirestore(saleId) {
-    await firestore.collection('sales').doc(String(saleId)).delete();
-  }
-
-  // RESTOCKS
-  async function syncRestocksFromFirestore() {
-    const snapshot = await firestore.collection('restocks').get();
-    const restocks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-    const store = tx(['restocks'], 'readwrite').objectStore('restocks');
-    await promisifyRequest(store.clear());
-    for (const r of restocks) {
-      await promisifyRequest(store.put({ ...r, id: isNaN(Number(r.id)) ? Date.now() : Number(r.id) }));
-    }
-    return restocks;
-  }
-
-  async function syncRestockToFirestore(restock) {
-    const ref = firestore.collection('restocks').doc(String(restock.id));
-    await ref.set(restock);
-  }
-
-  async function deleteRestockFromFirestore(restockId) {
-    await firestore.collection('restocks').doc(String(restockId)).delete();
-  }
   // ========== IndexedDB Setup ==========
   const DB_NAME = 'RajEnterpriseDB';
   const DB_VERSION = 3;
@@ -1028,10 +953,6 @@
 
   // ========== Load / Display ==========
   async function loadInitialData(){
-    // First, sync from Firestore to local
-    await syncProductsFromFirestore();
-    await syncSalesFromFirestore();
-    await syncRestocksFromFirestore();
     await loadProducts();
     await loadSales();
     await loadLowStockAlerts();
@@ -1112,7 +1033,6 @@
         const store = tx(['products'],'readwrite').objectStore('products');
         const req = store.add(product);
         await promisifyRequest(req);
-        await syncProductToFirestore(product);
         showNotification('Product added successfully');
         await loadProducts();
         await loadLowStockAlerts();
@@ -1211,7 +1131,6 @@
         const store = tx(['products'],'readwrite').objectStore('products');
         const req = store.put(product);
         await promisifyRequest(req);
-        await syncProductToFirestore(product);
         showNotification('Product updated');
         document.getElementById('edit-product-modal').style.display = 'none';
         await loadProducts();
@@ -1224,7 +1143,6 @@
       try{
         const store = tx(['products'],'readwrite').objectStore('products');
         await promisifyRequest(store.delete(productId));
-        await deleteProductFromFirestore(productId);
         showNotification('Product deleted');
         await loadProducts();
         await loadLowStockAlerts();
@@ -1535,67 +1453,9 @@
         
         // Reset form and bill
         document.getElementById('sale-form').reset();
-        try {
-          const store = tx(['sales', 'products'], 'readwrite');
-          const salesStore = store.objectStore('sales');
-          const productsStore = store.objectStore('products');
-
-          // Process each item in the bill
-          for (const item of currentBillItems) {
-            // Get the product to update its quantity
-            const product = await promisifyRequest(productsStore.get(item.productId));
-            if (!product) {
-              showNotification(`Product not found: ${item.productName}`, 'error');
-              continue;
-            }
-
-            // Check if there's enough stock
-            if (product.quantity < item.quantity) {
-              showNotification(`Not enough stock for ${product.name}. Only ${product.quantity} available.`, 'error');
-              continue;
-            }
-
-            // Update product quantity
-            product.quantity -= item.quantity;
-            await promisifyRequest(productsStore.put(product));
-            await syncProductToFirestore(product);
-
-            // Add the sale
-            const saleData = {
-              id: Date.now() + Math.floor(Math.random()*10000),
-              productId: item.productId,
-              quantity: item.quantity,
-              pricePerUnit: item.pricePerUnit,
-              date: new Date().toISOString(),
-              customerName: customerInfo.name,
-              customerPhone: customerInfo.phone,
-              customerAddress: customerInfo.address
-            };
-
-            await promisifyRequest(salesStore.add(saleData));
-            await syncSaleToFirestore(saleData);
-          }
-
-          showNotification('Sale recorded successfully');
-
-          // Generate and show bill
-          generateBillFromItems(currentBillItems, customerInfo);
-
-          // Reset form and bill
-          document.getElementById('sale-form').reset();
-          currentBillItems = [];
-          updateBillDisplay();
-
-          await loadSales();
-          await loadProducts();
-          await loadLowStockAlerts();
-          computeDashboardMetrics();
-        } catch (err) {
-          console.error(err);
-          showNotification('Error recording sale', 'error');
-        }
         currentBillItems = [];
         updateBillDisplay();
+        
         await loadSales();
         await loadProducts();
         await loadLowStockAlerts();
@@ -1605,7 +1465,54 @@
         showNotification('Error recording sale', 'error');
       }
     }
-    
+
+    // ========== Handle Offline Bill Sync ==========
+    async function recordBillSaleFromOffline(action) {
+      try {
+        const store = tx(['sales', 'products'], 'readwrite');
+        const salesStore = store.objectStore('sales');
+        const productsStore = store.objectStore('products');
+
+        for (const item of action.items) {
+          const product = await promisifyRequest(productsStore.get(item.productId));
+          if (!product) continue;
+
+          if (product.quantity < item.quantity) continue;
+
+          product.quantity -= item.quantity;
+          await promisifyRequest(productsStore.put(product));
+
+          const saleData = {
+            productId: item.productId,
+            quantity: item.quantity,
+            pricePerUnit: item.pricePerUnit,
+            date: action.createdAt || new Date().toISOString(),
+            customerName: action.customerInfo.name,
+            customerPhone: action.customerInfo.phone,
+            customerAddress: action.customerInfo.address
+          };
+          await promisifyRequest(salesStore.add(saleData));
+        }
+
+        window._salesCache = (window._salesCache || []).filter(sale => !sale.temp);
+
+        await loadSales();
+        await loadProducts();
+        await loadLowStockAlerts();
+        computeDashboardMetrics();
+      } catch (err) {
+        console.error('Error syncing offline bill:', err);
+        throw err;
+      }
+    }
+
+    // Function to generate bill from items
+    function generateBillFromItems(items, customerInfo) {
+      const billContent = generateBillContent(items, customerInfo);
+      document.getElementById('bill-content').innerHTML = billContent;
+      document.getElementById('bill-modal').style.display = 'flex';
+    }
+
     // Function to generate bill for existing sale
     async function generateBillForExistingSale(saleId) {
       try {
@@ -1735,77 +1642,73 @@
     }
 
     async function updateSale(updatedSale) {
-        try {
-          const store = tx(['sales', 'products'], 'readwrite');
-          const salesStore = store.objectStore('sales');
-          const productsStore = store.objectStore('products');
-
-          // Get the original sale and product
-          const originalSale = await promisifyRequest(salesStore.get(updatedSale.id));
-          const product = await promisifyRequest(productsStore.get(originalSale.productId));
-
-          // Calculate quantity difference
-          const quantityDiff = originalSale.quantity - updatedSale.quantity;
-
-          // Update product quantity
-          product.quantity += quantityDiff;
-          await promisifyRequest(productsStore.put(product));
-          await syncProductToFirestore(product);
-
-          // Update the sale
-          await promisifyRequest(salesStore.put(updatedSale));
-          await syncSaleToFirestore(updatedSale);
-
-          showNotification('Sale updated successfully');
-          document.getElementById('edit-sale-modal').style.display = 'none';
-
-          await loadSales();
-          await loadProducts();
-          await loadLowStockAlerts();
-          computeDashboardMetrics();
-        } catch (err) {
-          console.error(err);
-          showNotification('Error updating sale', 'error');
-        }
+      try {
+        const store = tx(['sales', 'products'], 'readwrite');
+        const salesStore = store.objectStore('sales');
+        const productsStore = store.objectStore('products');
+        
+        // Get the original sale and product
+        const originalSale = await promisifyRequest(salesStore.get(updatedSale.id));
+        const product = await promisifyRequest(productsStore.get(originalSale.productId));
+        
+        // Calculate quantity difference
+        const quantityDiff = originalSale.quantity - updatedSale.quantity;
+        
+        // Update product quantity
+        product.quantity += quantityDiff;
+        await promisifyRequest(productsStore.put(product));
+        
+        // Update the sale
+        await promisifyRequest(salesStore.put(updatedSale));
+        
+        showNotification('Sale updated successfully');
+        document.getElementById('edit-sale-modal').style.display = 'none';
+        
+        await loadSales();
+        await loadProducts();
+        await loadLowStockAlerts();
+        computeDashboardMetrics();
+      } catch (err) {
+        console.error(err);
+        showNotification('Error updating sale', 'error');
+      }
     }
 
     async function deleteSale(saleId) {
-        if (!confirm('Are you sure you want to delete this sale?')) return;
-
-        try {
-          const store = tx(['sales', 'products'], 'readwrite');
-          const salesStore = store.objectStore('sales');
-          const productsStore = store.objectStore('products');
-
-          // Get the sale to restore product quantity
-          const sale = await promisifyRequest(salesStore.get(saleId));
-          if (!sale) {
-            showNotification('Sale not found', 'error');
-            return;
-          }
-
-          // Get the product and restore quantity
-          const product = await promisifyRequest(productsStore.get(sale.productId));
-          if (product) {
-            product.quantity += sale.quantity;
-            await promisifyRequest(productsStore.put(product));
-            await syncProductToFirestore(product);
-          }
-
-          // Delete the sale
-          await promisifyRequest(salesStore.delete(saleId));
-          await deleteSaleFromFirestore(saleId);
-
-          showNotification('Sale deleted successfully');
-
-          await loadSales();
-          await loadProducts();
-          await loadLowStockAlerts();
-          computeDashboardMetrics();
-        } catch (err) {
-          console.error(err);
-          showNotification('Error deleting sale', 'error');
+      if (!confirm('Are you sure you want to delete this sale?')) return;
+      
+      try {
+        const store = tx(['sales', 'products'], 'readwrite');
+        const salesStore = store.objectStore('sales');
+        const productsStore = store.objectStore('products');
+        
+        // Get the sale to restore product quantity
+        const sale = await promisifyRequest(salesStore.get(saleId));
+        if (!sale) {
+          showNotification('Sale not found', 'error');
+          return;
         }
+        
+        // Get the product and restore quantity
+        const product = await promisifyRequest(productsStore.get(sale.productId));
+        if (product) {
+          product.quantity += sale.quantity;
+          await promisifyRequest(productsStore.put(product));
+        }
+        
+        // Delete the sale
+        await promisifyRequest(salesStore.delete(saleId));
+        
+        showNotification('Sale deleted successfully');
+        
+        await loadSales();
+        await loadProducts();
+        await loadLowStockAlerts();
+        computeDashboardMetrics();
+      } catch (err) {
+        console.error(err);
+        showNotification('Error deleting sale', 'error');
+      }
     }
 
     // ========== AUTCOMPLETE FUNCTIONALITY ==========
@@ -1965,32 +1868,29 @@
 
     // NEW: Function to record restock
     async function recordRestock(restockData) {
-        try {
-          const store = tx(['restocks', 'products'], 'readwrite');
-          const restocksStore = store.objectStore('restocks');
-          const productsStore = store.objectStore('products');
-
-          // Add restock record
-          restockData.id = Date.now() + Math.floor(Math.random()*10000);
-          await promisifyRequest(restocksStore.add(restockData));
-          await syncRestockToFirestore(restockData);
-
-          // Update product
-          const product = await promisifyRequest(productsStore.get(restockData.productId));
-          product.quantity += restockData.quantityAdded;
-          product.costPrice = restockData.newCostPrice;
-          product.mrp = restockData.newMRP;
-
-          await promisifyRequest(productsStore.put(product));
-          await syncProductToFirestore(product);
-
-          showNotification('Product restocked successfully');
-          return true;
-        } catch (err) {
-          console.error('Error recording restock:', err);
-          showNotification('Error restocking product', 'error');
-          return false;
-        }
+      try {
+        const store = tx(['restocks', 'products'], 'readwrite');
+        const restocksStore = store.objectStore('restocks');
+        const productsStore = store.objectStore('products');
+        
+        // Add restock record
+        await promisifyRequest(restocksStore.add(restockData));
+        
+        // Update product
+        const product = await promisifyRequest(productsStore.get(restockData.productId));
+        product.quantity += restockData.quantityAdded;
+        product.costPrice = restockData.newCostPrice;
+        product.mrp = restockData.newMRP;
+        
+        await promisifyRequest(productsStore.put(product));
+        
+        showNotification('Product restocked successfully');
+        return true;
+      } catch (err) {
+        console.error('Error recording restock:', err);
+        showNotification('Error restocking product', 'error');
+        return false;
+      }
     }
 
     // NEW: Function to open restock modal
@@ -1998,47 +1898,44 @@
       const store = tx(['products']).objectStore('products');
       const product = await promisifyRequest(store.get(productId));
       
-        try {
-          const store = tx(['restocks', 'products'], 'readwrite');
-          const restocksStore = store.objectStore('restocks');
-          const productsStore = store.objectStore('products');
-
-          // Get the restock record
-          const restock = await promisifyRequest(restocksStore.get(restockId));
-
-          if (!restock) {
-            showNotification('Restock record not found', 'error');
-            return;
-          }
-
-          // Get the product and revert the quantity
-          const product = await promisifyRequest(productsStore.get(restock.productId));
-          product.quantity -= restock.quantityAdded;
-
-          // Update the product
-          await promisifyRequest(productsStore.put(product));
-          await syncProductToFirestore(product);
-
-          // Delete the restock record
-          await promisifyRequest(restocksStore.delete(restockId));
-          await deleteRestockFromFirestore(restockId);
-
-          showNotification('Restock record deleted successfully');
-
-          // Reload data
-          await loadProducts();
-          await loadLowStockAlerts();
-          computeDashboardMetrics();
-
-          // Reload restock history if we're on that tab
-          if (document.getElementById('restock-report').classList.contains('active')) {
-            loadRestockHistory();
-          }
-        } catch (err) {
-          console.error('Error deleting restock:', err);
-          showNotification('Error deleting restock record', 'error');
-        }
+      if (!product) {
+        showNotification('Product not found', 'error');
+        return;
       }
+      
+      document.getElementById('restock-product-id').value = product.id;
+      document.getElementById('restock-product-name').value = product.name.toUpperCase();
+      document.getElementById('restock-current-quantity').value = product.quantity;
+      document.getElementById('restock-quantity').value = 0;
+      document.getElementById('restock-cost').value = product.costPrice;
+      document.getElementById('restock-mrp').value = product.mrp;
+      
+      document.getElementById('restock-modal').style.display = 'flex';
+    }
+
+    // NEW: Function to load restock history
+    async function loadRestockHistory(fromDate = null, toDate = null) {
+      try {
+        const store = tx(['restocks']).objectStore('restocks');
+        let restocks = await promisifyRequest(store.getAll());
+        
+        // Filter by date if provided
+        if (fromDate && toDate) {
+          restocks = restocks.filter(restock => {
+            const restockDate = restock.date.split('T')[0];
+            return restockDate >= fromDate && restockDate <= toDate;
+          });
+        }
+        
+        // Sort by date (newest first)
+        restocks.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        displayRestockHistory(restocks);
+      } catch (err) {
+        console.error('Error loading restock history:', err);
+        showNotification('Error loading restock history', 'error');
+      }
+    }
 
     // NEW: Function to display restock history
     async function displayRestockHistory(restocks) {
