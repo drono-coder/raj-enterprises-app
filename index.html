@@ -856,9 +856,7 @@
 
 <script>
     // ========== IndexedDB Setup ==========
-    const DB_NAME = 'RajEnterpriseDB';
-    const DB_VERSION = 3; // Kept at 3 since restocks was added. OfflineQueue store creation is removed.
-    let db = null;
+
 
     function openDB(){
       return new Promise((resolve, reject) => {
@@ -1265,7 +1263,7 @@
       }
 
       // Current bill items array
-      let currentBillItems = [];
+
 
       // Function to add item to current bill
       function addItemToBill() {
@@ -1385,8 +1383,6 @@
           address: document.getElementById('customer-address').value
         };
 
-        // Offline queueing logic REMOVED - not needed for local-only app
-
         try {
           const store = tx(['sales', 'products'], 'readwrite');
           const salesStore = store.objectStore('sales');
@@ -1411,7 +1407,7 @@
             product.quantity -= item.quantity;
             await promisifyRequest(productsStore.put(product));
 
-            // Add the sale
+            // Add the sale (local)
             const saleData = {
               productId: item.productId,
               quantity: item.quantity,
@@ -1419,14 +1415,22 @@
               date: new Date().toISOString(),
               customerName: customerInfo.name,
               customerPhone: customerInfo.phone,
-              customerAddress: customerInfo.address
+              customerAddress: customerInfo.address,
+              pendingSync: false // default
             };
 
-            await promisifyRequest(salesStore.add(saleData));
-            // Firestore sync
+            // Try Firestore sync
+            let synced = false;
             if (window.syncSaleToFirestore) {
-              window.syncSaleToFirestore(saleData);
+              try {
+                await window.syncSaleToFirestore(saleData);
+                synced = true;
+              } catch (e) {
+                synced = false;
+              }
             }
+            saleData.pendingSync = !synced;
+            await promisifyRequest(salesStore.add(saleData));
           }
 
           showNotification('Sale recorded successfully');
@@ -1447,6 +1451,34 @@
           console.error(err);
           showNotification('Error recording sale', 'error');
         }
+// --- Firestore offline sync: syncPendingSales ---
+async function syncPendingSales() {
+  try {
+    const store = tx(['sales'], 'readwrite').objectStore('sales');
+    const allSales = await promisifyRequest(store.getAll());
+    for (const sale of allSales) {
+      if (sale.pendingSync) {
+        try {
+          if (window.syncSaleToFirestore) {
+            await window.syncSaleToFirestore(sale);
+            sale.pendingSync = false;
+            await promisifyRequest(store.put(sale));
+            console.log('✅ Synced pending sale to Firestore:', sale);
+          }
+        } catch (e) {
+          console.error('❌ Still offline, will retry:', sale);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error syncing pending sales:', err);
+  }
+}
+
+// Auto-sync when back online
+window.addEventListener('online', syncPendingSales);
+// Optionally, call on app startup
+syncPendingSales();
       }
 
       // recordBillSaleFromOffline REMOVED - not needed for local-only app
