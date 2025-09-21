@@ -10,10 +10,7 @@
     <!-- Firebase SDK -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-      import {
-        getFirestore, collection, onSnapshot, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc
-      } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
+      import { getFirestore, collection, onSnapshot, addDoc, getDocs, doc, updateDoc, deleteDoc  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
       const firebaseConfig = {
         apiKey: "AIzaSyAOW9WOH4i6_T29Kfz0fEW-HIr0Fih_yjU",
         authDomain: "raj-enterprises-4a9b1.firebaseapp.com",
@@ -26,85 +23,17 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
-      // --- Firestore Sales Integration ---
-      window.loadSales = function loadSales() {
-        showTabLoading('sales');
-        try {
-          const salesRef = collection(db, "sales");
-          onSnapshot(salesRef, (snapshot) => {
-            const sales = [];
-            snapshot.forEach((docSnap) => {
-              sales.push({ id: docSnap.id, ...docSnap.data() });
-            });
-            window._salesCache = sales;
-            displayTodaySales(sales);
-            displayAllSales(sales);
-            hideTabLoading('sales');
-            updateFirestoreStatus(true, "Connected to Cloud");
-          }, (error) => {
-            console.error("Firestore error:", error);
-            hideTabLoading('sales');
-            updateFirestoreStatus(false, "Sync error - using local data");
-            loadSalesFromIndexedDB();
-          });
-        } catch (error) {
-          console.error("Error setting up Firestore listener:", error);
-          hideTabLoading('sales');
-          updateFirestoreStatus(false, "Offline - using local data");
-          loadSalesFromIndexedDB();
-        }
-      }
-
-      window.addSaleToFirestore = async function addSaleToFirestore(saleData) {
-        try {
-          await addDoc(collection(db, "sales"), saleData);
-          return true;
-        } catch (error) {
-          console.error("Error adding sale to Firestore:", error);
-          // Fallback: Save to IndexedDB for later sync
-          try {
-            const store = tx(['sales'], 'readwrite').objectStore('sales');
-            await promisifyRequest(store.add(saleData));
-            showNotification('Sale saved locally (will sync when online)', 'warning');
-            return true;
-          } catch (indexedDBError) {
-            console.error("Error saving sale to IndexedDB:", indexedDBError);
-            return false;
-          }
-        }
-      }
-
-      window.getFirestoreSale = async function getFirestoreSale(saleId) {
-        try {
-          const saleDoc = await getDoc(doc(db, "sales", saleId));
-          if (saleDoc.exists()) {
-            return { id: saleDoc.id, ...saleDoc.data() };
-          }
-        } catch (err) {
-          console.error("Error getting sale from Firestore:", err);
-        }
-        return null;
-      }
-
-      window.updateFirestoreSale = async function updateFirestoreSale(saleId, data) {
-        try {
-          await updateDoc(doc(db, "sales", saleId), data);
-          return true;
-        } catch (err) {
-          console.error("Error updating sale in Firestore:", err);
-          return false;
-        }
-      }
-
-      window.deleteFirestoreSale = async function deleteFirestoreSale(saleId) {
-        try {
-          await deleteDoc(doc(db, "sales", saleId));
-          return true;
-        } catch (err) {
-          console.error("Error deleting sale from Firestore:", err);
-          return false;
-        }
-      }
+      // Expose Firestore functions to window for use in non-module scripts
+      window._firestore = {
+        db,
+        collection,
+        onSnapshot,
+        addDoc,
+        getDocs,
+        doc,
+        updateDoc,
+        deleteDoc
+      };
     </script>
 
     <link rel="manifest" href="manifest.json">
@@ -1264,6 +1193,38 @@
     }
 
     // ========== FIRESTORE SALES INTEGRATION ==========
+    async function loadSales() {
+    showTabLoading('sales');
+    try {
+      const { db, collection, onSnapshot } = window._firestore;
+      const salesRef = collection(db, "sales");
+
+      onSnapshot(salesRef, (snapshot) => {
+        const sales = [];
+        snapshot.forEach((docSnap) => {
+          sales.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        window._salesCache = sales;
+        displayTodaySales(sales);
+        displayAllSales(sales);
+        hideTabLoading('sales');
+        updateFirestoreStatus(true, "Connected to Cloud");
+      }, (error) => {
+        console.error("Firestore error:", error);
+        hideTabLoading('sales');
+        updateFirestoreStatus(false, "Sync error - using local data");
+        loadSalesFromIndexedDB();
+      });
+
+    } catch (error) {
+      console.error("Error setting up Firestore listener:", error);
+      hideTabLoading('sales');
+      updateFirestoreStatus(false, "Offline - using local data");
+      loadSalesFromIndexedDB();
+    }
+  }
+    
     // Fallback function to load sales from IndexedDB
     async function loadSalesFromIndexedDB() {
       try {
@@ -1291,8 +1252,24 @@
     }
 
     async function addSaleToFirestore(saleData) {
-      // This function is now defined in the module script and attached to window.addSaleToFirestore
-      // ...existing code...
+      try {
+        const { addDoc, collection, db } = getFirestore(app);
+        await addDoc(collection(db, "sales"), saleData);
+        return true;
+      } catch (error) {
+        console.error("Error adding sale to Firestore:", error);
+        
+        // Fallback: Save to IndexedDB for later sync
+        try {
+          const store = tx(['sales'], 'readwrite').objectStore('sales');
+          await promisifyRequest(store.add(saleData));
+          showNotification('Sale saved locally (will sync when online)', 'warning');
+          return true;
+        } catch (indexedDBError) {
+          console.error("Error saving sale to IndexedDB:", indexedDBError);
+          return false;
+        }
+      }
     }
 
     function displayTodaySales(sales) {
@@ -1582,8 +1559,15 @@
     async function generateBillForExistingSale(saleId) {
       try {
         // Try to get from Firestore first
-        let sale = await window.getFirestoreSale(saleId);
-        if (!sale) {
+        let sale;
+        try {
+          const { doc, getDoc, db } = getFirestore(app);
+          const saleDoc = await getDoc(doc(db, "sales", saleId));
+          if (saleDoc.exists()) {
+            sale = { id: saleDoc.id, ...saleDoc.data() };
+          }
+        } catch (firestoreError) {
+          console.error("Error getting sale from Firestore:", firestoreError);
           // Fallback to IndexedDB
           const store = tx(['sales']).objectStore('sales');
           sale = await promisifyRequest(store.get(Number(saleId)));
@@ -1627,14 +1611,21 @@
         const sales = [];
 
         for (const id of saleIds) {
-          let sale = await window.getFirestoreSale(id);
-          if (!sale) {
+          // Try Firestore first
+          try {
+            const { doc, getDoc, db } = getFirestore(app);
+            const saleDoc = await getDoc(doc(db, "sales", id));
+            if (saleDoc.exists()) {
+              sales.push({ id: saleDoc.id, ...saleDoc.data() });
+            }
+          } catch (firestoreError) {
+            console.error("Error getting sale from Firestore:", firestoreError);
             // Fallback to IndexedDB
             const store = tx(['sales']).objectStore('sales');
-            sale = await promisifyRequest(store.get(Number(id)));
-          }
-          if (sale) {
-            sales.push(sale);
+            const sale = await promisifyRequest(store.get(Number(id)));
+            if (sale) {
+              sales.push(sale);
+            }
           }
         }
 
@@ -1697,8 +1688,17 @@
     }
 
     async function openEditSaleModal(saleId) {
-      let sale = await window.getFirestoreSale(saleId);
-      if (!sale) {
+      let sale;
+      
+      // Try Firestore first
+      try {
+        const { doc, getDoc, db } = getFirestore(app);
+        const saleDoc = await getDoc(doc(db, "sales", saleId));
+        if (saleDoc.exists()) {
+          sale = { id: saleDoc.id, ...saleDoc.data() };
+        }
+      } catch (firestoreError) {
+        console.error("Error getting sale from Firestore:", firestoreError);
         // Fallback to IndexedDB
         const store = tx(['sales']).objectStore('sales');
         sale = await promisifyRequest(store.get(Number(saleId)));
@@ -1724,8 +1724,17 @@
         const productsStore = store.objectStore('products');
 
         // Get the original sale and product
-        let originalSale = await window.getFirestoreSale(updatedSale.id);
-        if (!originalSale) {
+        let originalSale;
+        
+        // Try Firestore first
+        try {
+          const { doc, getDoc, db } = getFirestore(app);
+          const saleDoc = await getDoc(doc(db, "sales", updatedSale.id));
+          if (saleDoc.exists()) {
+            originalSale = { id: saleDoc.id, ...saleDoc.data() };
+          }
+        } catch (firestoreError) {
+          console.error("Error getting sale from Firestore:", firestoreError);
           // Fallback to IndexedDB
           const salesStore = tx(['sales']).objectStore('sales');
           originalSale = await promisifyRequest(salesStore.get(Number(updatedSale.id)));
@@ -1746,11 +1755,14 @@
         await promisifyRequest(productsStore.put(product));
 
         // Update the sale in Firestore
-        const updated = await window.updateFirestoreSale(updatedSale.id, {
-          quantity: updatedSale.quantity,
-          pricePerUnit: updatedSale.pricePerUnit
-        });
-        if (!updated) {
+        try {
+          const { doc, updateDoc, db } = getFirestore(app);
+          await updateDoc(doc(db, "sales", updatedSale.id), {
+            quantity: updatedSale.quantity,
+            pricePerUnit: updatedSale.pricePerUnit
+          });
+        } catch (firestoreError) {
+          console.error("Error updating sale in Firestore:", firestoreError);
           // Fallback to IndexedDB
           const salesStore = tx(['sales'], 'readwrite').objectStore('sales');
           await promisifyRequest(salesStore.put(updatedSale));
@@ -1777,8 +1789,17 @@
         const productsStore = store.objectStore('products');
 
         // Get the sale to restore product quantity
-        let sale = await window.getFirestoreSale(saleId);
-        if (!sale) {
+        let sale;
+        
+        // Try Firestore first
+        try {
+          const { doc, getDoc, db } = getFirestore(app);
+          const saleDoc = await getDoc(doc(db, "sales", saleId));
+          if (saleDoc.exists()) {
+            sale = { id: saleDoc.id, ...saleDoc.data() };
+          }
+        } catch (firestoreError) {
+          console.error("Error getting sale from Firestore:", firestoreError);
           // Fallback to IndexedDB
           const salesStore = tx(['sales']).objectStore('sales');
           sale = await promisifyRequest(salesStore.get(Number(saleId)));
@@ -1797,8 +1818,11 @@
         }
 
         // Delete the sale from Firestore
-        const deleted = await window.deleteFirestoreSale(saleId);
-        if (!deleted) {
+        try {
+          const { doc, deleteDoc, db } = getFirestore(app);
+          await deleteDoc(doc(db, "sales", saleId));
+        } catch (firestoreError) {
+          console.error("Error deleting sale from Firestore:", firestoreError);
           // Fallback to IndexedDB
           const salesStore = tx(['sales'], 'readwrite').objectStore('sales');
           await promisifyRequest(salesStore.delete(Number(saleId)));
@@ -2950,3 +2974,11 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
