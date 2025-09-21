@@ -23,6 +23,9 @@
 
     // Fetch event: serve from cache first, then fall back to network
     self.addEventListener('fetch', event => {
+        if (event.request.url.includes("firestore.googleapis.com")) {
+        return; // let Firestore handle this directly
+      }
       event.respondWith(
         caches.match(event.request)
           .then(response => {
