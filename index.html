@@ -11,7 +11,6 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
       import { getFirestore, collection, onSnapshot, addDoc, getDocs, doc, updateDoc, deleteDoc  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-      import { collection2, onSnapshot } from 'firebase/firestore';
       import { collection, onSnapshot } from "firebase/firestore";
       import { db } from './firebase-config'; // Assuming your Firestore instance is exported from here
       const firebaseConfig = {
@@ -30,7 +29,7 @@
     async function loadSales() {
     showTabLoading('sales');
     try {
-      const salesCollection = collection2(db, "sales"); // ✅ collection is imported above
+      const salesCollection = collection(db, "sales"); // ✅ collection is imported above
 
       onSnapshot(salesCollection, (snapshot) => {
         const sales = [];
@@ -1030,6 +1029,9 @@
     // ========== Load / Display ==========
     async function loadInitialData(){
       await loadProducts();
+      await loadSales();
+      await loadRestocks();
+      await loadSettings();
       await loadTodaySales();
       await loadAllSalesHistory();
       await loadLowStockAlerts();
