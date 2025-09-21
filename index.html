@@ -22,17 +22,7 @@
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
-      
-      // Make Firestore available globally
-      window.firestore = {
-        db,
-        addDoc,
-        collection,
-        onSnapshot,
-        doc,
-        updateDoc,
-        deleteDoc
-      };
+
     </script>
 
     <link rel="manifest" href="manifest.json">
@@ -1251,7 +1241,7 @@
 
     async function addSaleToFirestore(saleData) {
       try {
-        const { addDoc, collection, db } = window.firestore;
+        const { addDoc, collection, db } = getFirestore(app);
         await addDoc(collection(db, "sales"), saleData);
         return true;
       } catch (error) {
@@ -1559,7 +1549,7 @@
         // Try to get from Firestore first
         let sale;
         try {
-          const { doc, getDoc, db } = window.firestore;
+          const { doc, getDoc, db } = getFirestore(app);
           const saleDoc = await getDoc(doc(db, "sales", saleId));
           if (saleDoc.exists()) {
             sale = { id: saleDoc.id, ...saleDoc.data() };
@@ -1611,7 +1601,7 @@
         for (const id of saleIds) {
           // Try Firestore first
           try {
-            const { doc, getDoc, db } = window.firestore;
+            const { doc, getDoc, db } = getFirestore(app);
             const saleDoc = await getDoc(doc(db, "sales", id));
             if (saleDoc.exists()) {
               sales.push({ id: saleDoc.id, ...saleDoc.data() });
@@ -1690,7 +1680,7 @@
       
       // Try Firestore first
       try {
-        const { doc, getDoc, db } = window.firestore;
+        const { doc, getDoc, db } = getFirestore(app);
         const saleDoc = await getDoc(doc(db, "sales", saleId));
         if (saleDoc.exists()) {
           sale = { id: saleDoc.id, ...saleDoc.data() };
@@ -1726,7 +1716,7 @@
         
         // Try Firestore first
         try {
-          const { doc, getDoc, db } = window.firestore;
+          const { doc, getDoc, db } = getFirestore(app);
           const saleDoc = await getDoc(doc(db, "sales", updatedSale.id));
           if (saleDoc.exists()) {
             originalSale = { id: saleDoc.id, ...saleDoc.data() };
@@ -1754,7 +1744,7 @@
 
         // Update the sale in Firestore
         try {
-          const { doc, updateDoc, db } = window.firestore;
+          const { doc, updateDoc, db } = getFirestore(app);
           await updateDoc(doc(db, "sales", updatedSale.id), {
             quantity: updatedSale.quantity,
             pricePerUnit: updatedSale.pricePerUnit
@@ -1791,7 +1781,7 @@
         
         // Try Firestore first
         try {
-          const { doc, getDoc, db } = window.firestore;
+          const { doc, getDoc, db } = getFirestore(app);
           const saleDoc = await getDoc(doc(db, "sales", saleId));
           if (saleDoc.exists()) {
             sale = { id: saleDoc.id, ...saleDoc.data() };
@@ -1817,7 +1807,7 @@
 
         // Delete the sale from Firestore
         try {
-          const { doc, deleteDoc, db } = window.firestore;
+          const { doc, deleteDoc, db } = getFirestore(app);
           await deleteDoc(doc(db, "sales", saleId));
         } catch (firestoreError) {
           console.error("Error deleting sale from Firestore:", firestoreError);
@@ -2972,6 +2962,7 @@
 </script>
 </body>
 </html>
+
 
 
 
