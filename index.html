@@ -23,16 +23,42 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
         
-       // Make Firestore available globally
-      window.firestore = {
-        db,
-        collection,
-        addDoc,
-        onSnapshot,
-        doc,
-        updateDoc,
-        deleteDoc
-      };
+       // 🔄 Firestore listener
+  async function loadSales() {
+    showTabLoading('sales');
+    try {
+      const salesRef = collection(db, "sales"); // ✅ collection is imported above
+
+      onSnapshot(salesRef, (snapshot) => {
+        const sales = [];
+        snapshot.forEach((docSnap) => {
+          sales.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        window._salesCache = sales;
+        displayTodaySales(sales);
+        displayAllSales(sales);
+        hideTabLoading('sales');
+        updateFirestoreStatus(true, "Connected to Cloud");
+      }, (error) => {
+        console.error("Firestore error:", error);
+        hideTabLoading('sales');
+        updateFirestoreStatus(false, "Sync error - using local data");
+        loadSalesFromIndexedDB();
+      });
+
+    } catch (error) {
+      console.error("Error setting up Firestore listener:", error);
+      hideTabLoading('sales');
+      updateFirestoreStatus(false, "Offline - using local data");
+      loadSalesFromIndexedDB();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    await openDB();
+    await loadInitialData();
+  });
 
     </script>
 
@@ -2973,6 +2999,7 @@
 </script>
 </body>
 </html>
+
 
 
 
