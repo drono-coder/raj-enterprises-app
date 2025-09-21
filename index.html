@@ -6,7 +6,36 @@
     <title>Raj Enterprise - Stock & Sales Management </title>
     <!-- PWA Setup -->
     <meta name="theme-color" content="#3498db">
-    <!-- Firebase SDK - REMOVED -->
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+      import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } 
+        from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAOW9WOH4i6_T29Kfz0fEW-HIr0Fih_yjU",
+        authDomain: "raj-enterprises-4a9b1.firebaseapp.com",
+        projectId: "raj-enterprises-4a9b1",
+        storageBucket: "raj-enterprises-4a9b1.firebasestorage.app",
+        messagingSenderId: "1085563539961",
+        appId: "1:1085563539961:web:2043adf90fe116f055ad28"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      
+      // Make Firestore available globally
+      window.firestore = {
+        db,
+        collection,
+        addDoc,
+        onSnapshot,
+        doc,
+        updateDoc,
+        deleteDoc
+      };
+    </script>
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
@@ -180,9 +209,9 @@
           background: var(--danger);
           color: white;
           border: none;
-          border-radius: 44px; /* Increased tap target */
-          width: 44px; /* Increased tap target */
-          height: 44px; /* Increased tap target */
+          border-radius: 44px;
+          width: 44px;
+          height: 44px;
           cursor: pointer;
           font-size: 20px;
           display: flex;
@@ -284,38 +313,31 @@
           overflow: auto;
           border-radius: 0 0 8px 8px;
         }
+        
+        /* Firestore sync indicator */
+        .firestore-sync {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+          margin-top: 5px;
+        }
+        
+        .sync-status {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          display: inline-block;
+        }
+        
+        .sync-active {
+          background: var(--success);
+        }
+        
+        .sync-inactive {
+          background: var(--offline);
+        }
     </style>
-    <!-- Firebase setup -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot } 
-    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAOW9WOH4i6_T29Kfz0fEW-HIr0Fih_yjU",
-    authDomain: "raj-enterprises-4a9b1.firebaseapp.com",
-    projectId: "raj-enterprises-4a9b1",
-    storageBucket: "raj-enterprises-4a9b1.firebasestorage.app",
-    messagingSenderId: "1085563539961",
-    appId: "1:1085563539961:web:2043adf90fe116f055ad28"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Optional: Example functions
-  onSnapshot(collection(db, "sales"), (snapshot) => {
-    const sales = snapshot.docs.map(doc => doc.data());
-    console.log("Live sales:", sales);
-    // Update your UI accordingly
-  });
-
-  // Function to add data
-  async function addSale(saleData) {
-    await addDoc(collection(db, "sales"), saleData);
-  }
-</script>
-
 </head>
 <body>
 <div class="container">
@@ -360,7 +382,6 @@
             <span>Dashboard</span>
             <div style="display:flex; gap:8px; align-items:center;">
                 <button class="btn btn-primary" id="sync-button"><i class="fas fa-file-export"></i> Export All Data</button>
-                <!-- manual-sync button REMOVED -->
                 <button class="btn btn-warning" id="import-paste-btn"><i class="fas fa-upload"></i> Import</button>
             </div>
         </div>
@@ -400,7 +421,6 @@
 
             <div style="margin-top:6px;">
                 <h3>Low Stock Alert</h3>
-                <!-- NEW: Search bar for low stock alerts -->
                 <div class="search-box" style="margin-bottom:10px;">
                     <input type="text" id="low-stock-search" placeholder="Search low stock products...">
                 </div>
@@ -464,6 +484,12 @@
                     <button type="button" id="add-to-bill" class="btn btn-primary">Add to Bill</button>
                     <button type="button" id="generate-bill-btn" class="btn btn-warning" disabled>Generate Bill</button>
                     <button type="submit" class="btn btn-success">Record Sale</button>
+                </div>
+                
+                <!-- Firestore sync indicator -->
+                <div class="firestore-sync">
+                    <span class="sync-status sync-active" id="firestore-status"></span>
+                    <span id="firestore-status-text">Connected to Cloud</span>
                 </div>
             </form>
 
@@ -530,7 +556,7 @@
     <div class="content-section" id="reports">
         <div class="section-title"><span>Sales Reports</span><span class="small muted">Generate totals by date range</span></div>
 
-        <!-- NEW: Report Tabs -->
+        <!-- Report Tabs -->
         <div class="report-tabs">
             <div class="report-tab active" data-target="sales-report">Sales Report</div>
             <div class="report-tab" data-target="restock-report">Restock History</div>
@@ -577,7 +603,7 @@
             </div>
         </div>
 
-        <!-- NEW: Restock History Report -->
+        <!-- Restock History Report -->
         <div class="report-content" id="restock-report">
             <div class="card">
                 <div class="date-filter" style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -712,7 +738,6 @@
                 <span>Data is stored locally in your browser</span>
                 <span class="last-saved" id="last-saved">Last saved: Just now</span>
             </div>
-            <!-- Offline notice and Cloud sync notes REMOVED -->
             <hr style="margin:12px 0;">
             <div>
                 <h4>Local Data Persistence Notes</h4>
@@ -760,7 +785,7 @@
         </div>
     </div>
 
-    <!-- NEW: Restock Modal -->
+    <!-- Restock Modal -->
     <div class="modal" id="restock-modal" aria-hidden="true">
         <div class="modal-content">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -846,7 +871,7 @@
         </div>
     </div>
 
-    <!-- Edit Sale Modal (NEW) -->
+    <!-- Edit Sale Modal -->
     <div class="modal" id="edit-sale-modal" aria-hidden="true">
         <div class="modal-content">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -882,7 +907,7 @@
 <script>
     // ========== IndexedDB Setup ==========
     const DB_NAME = 'RajEnterpriseDB';
-    const DB_VERSION = 3; // Kept at 3 since restocks was added. OfflineQueue store creation is removed.
+    const DB_VERSION = 3;
     let db = null;
 
     function openDB(){
@@ -896,6 +921,7 @@
             products.createIndex('name', 'name', { unique:false });
           }
           if (!db.objectStoreNames.contains('sales')) {
+            // We'll keep this for offline fallback but use Firestore primarily
             const sales = db.createObjectStore('sales', { keyPath:'id', autoIncrement:true });
             sales.createIndex('date', 'date', { unique:false });
             sales.createIndex('productId', 'productId', { unique:false });
@@ -908,12 +934,11 @@
             restocks.createIndex('productId', 'productId', { unique:false });
             restocks.createIndex('date', 'date', { unique:false });
           }
-          // offlineQueue object store REMOVED - not needed for local-only app
         };
         request.onsuccess = (e) => {
           db = e.target.result;
           resolve(db);
-          setTimeout(checkOnlineStatus, 100); // Only for UI status, not sync
+          setTimeout(checkOnlineStatus, 100);
         };
       });
     }
@@ -978,10 +1003,9 @@
     // ========== Load / Display ==========
     async function loadInitialData(){
       await loadProducts();
-      await loadSales();
+      await loadSales(); // Now uses Firestore
       await loadLowStockAlerts();
       computeDashboardMetrics();
-      // loadOfflineQueue() REMOVED
     }
 
     // PRODUCTS
@@ -1001,7 +1025,7 @@
 
     function displayProducts(products){
       const table = document.getElementById('stock-table');
-      if (!table) return; // Added null check
+      if (!table) return;
 
       table.innerHTML = '';
       if (!products || products.length === 0){
@@ -1012,8 +1036,8 @@
       // Display sequential numbers instead of actual IDs
       products.forEach((p, index) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${index + 1}</td>
+        tr.innerHTML = 
+          `<td>${index + 1}</td>
           <td>${p.name.toUpperCase()}</td>
           <td>${p.quantity}</td>
           <td>${formatCurrency(p.costPrice)}</td>
@@ -1022,8 +1046,7 @@
             <button class="btn btn-primary edit-product" data-id="${p.id}">Edit</button>
             <button class="btn btn-warning restock-product" data-id="${p.id}">Restock</button>
             <button class="btn btn-danger delete-product" data-id="${p.id}">Remove</button>
-          </td>
-        `;
+          </td>`;
         table.appendChild(tr);
       });
 
@@ -1049,549 +1072,512 @@
       });
     }
 
-      async function addProduct(product){
-        try{
-          const store = tx(['products'],'readwrite').objectStore('products');
-          const req = store.add(product);
-          await promisifyRequest(req);
-          showNotification('Product added successfully');
-          await loadProducts();
-          await loadLowStockAlerts();
-        }catch(err){
-          console.error(err);
-          showNotification('Error adding product','error');
+    async function addProduct(product){
+      try{
+        const store = tx(['products'],'readwrite').objectStore('products');
+        const req = store.add(product);
+        await promisifyRequest(req);
+        showNotification('Product added successfully');
+        await loadProducts();
+        await loadLowStockAlerts();
+      }catch(err){
+        console.error(err);
+        showNotification('Error adding product','error');
+      }
+    }
+
+    async function openEditRestockModal(restockId) {
+      try {
+        const store = tx(['restocks']).objectStore('restocks');
+        const restock = await promisifyRequest(store.get(restockId));
+
+        if (!restock) {
+          showNotification('Restock record not found', 'error');
+          return;
         }
+
+        const product = await getProduct(restock.productId);
+
+        // Populate the modal fields
+        document.getElementById('edit-restock-id').value = restock.id;
+        document.getElementById('edit-restock-product').value = product.name.toUpperCase();
+        document.getElementById('edit-restock-quantity').value = restock.quantityAdded;
+        document.getElementById('edit-restock-cost').value = restock.newCostPrice;
+        document.getElementById('edit-restock-mrp').value = restock.newMRP;
+        document.getElementById('edit-restock-previous').value = restock.previousQuantity;
+
+        // Show the modal
+        document.getElementById('edit-restock-modal').style.display = 'flex';
+      } catch (err) {
+        console.error('Error opening edit restock modal:', err);
+        showNotification('Error opening edit form', 'error');
       }
+    }
 
-      async function openEditRestockModal(restockId) {
-        try {
-          const store = tx(['restocks']).objectStore('restocks');
-          const restock = await promisifyRequest(store.get(restockId));
+    async function deleteRestock(restockId) {
+      if (!confirm('Are you sure you want to delete this restock record? This will revert the product quantity.')) return;
 
-          if (!restock) {
-            showNotification('Restock record not found', 'error');
-            return;
-          }
+      try {
+        const store = tx(['restocks', 'products'], 'readwrite');
+        const restocksStore = store.objectStore('restocks');
+        const productsStore = store.objectStore('products');
 
-          const product = await getProduct(restock.productId);
+        // Get the restock record
+        const restock = await promisifyRequest(restocksStore.get(restockId));
 
-          // Populate the modal fields
-          document.getElementById('edit-restock-id').value = restock.id;
-          document.getElementById('edit-restock-product').value = product.name.toUpperCase();
-          document.getElementById('edit-restock-quantity').value = restock.quantityAdded;
-          document.getElementById('edit-restock-cost').value = restock.newCostPrice;
-          document.getElementById('edit-restock-mrp').value = restock.newMRP;
-          document.getElementById('edit-restock-previous').value = restock.previousQuantity;
-
-          // Show the modal
-          document.getElementById('edit-restock-modal').style.display = 'flex';
-        } catch (err) {
-          console.error('Error opening edit restock modal:', err);
-          showNotification('Error opening edit form', 'error');
+        if (!restock) {
+          showNotification('Restock record not found', 'error');
+          return;
         }
-      }
 
-      async function deleteRestock(restockId) {
-        if (!confirm('Are you sure you want to delete this restock record? This will revert the product quantity.')) return;
+        // Get the product and revert the quantity
+        const product = await promisifyRequest(productsStore.get(restock.productId));
+        product.quantity -= restock.quantityAdded;
 
-        try {
-          const store = tx(['restocks', 'products'], 'readwrite');
-          const restocksStore = store.objectStore('restocks');
-          const productsStore = store.objectStore('products');
+        // Update the product
+        await promisifyRequest(productsStore.put(product));
 
-          // Get the restock record
-          const restock = await promisifyRequest(restocksStore.get(restockId));
+        // Delete the restock record
+        await promisifyRequest(restocksStore.delete(restockId));
 
-          if (!restock) {
-            showNotification('Restock record not found', 'error');
-            return;
-          }
+        showNotification('Restock record deleted successfully');
 
-          // Get the product and revert the quantity
-          const product = await promisifyRequest(productsStore.get(restock.productId));
-          product.quantity -= restock.quantityAdded;
+        // Reload data
+        await loadProducts();
+        await loadLowStockAlerts();
+        computeDashboardMetrics();
 
-          // Update the product
-          await promisifyRequest(productsStore.put(product));
-
-          // Delete the restock record
-          await promisifyRequest(restocksStore.delete(restockId));
-
-          showNotification('Restock record deleted successfully');
-
-          // Reload data
-          await loadProducts();
-          await loadLowStockAlerts();
-          computeDashboardMetrics();
-
-          // Reload restock history if we're on that tab
-          if (document.getElementById('restock-report').classList.contains('active')) {
-            loadRestockHistory();
-          }
-        } catch (err) {
-          console.error('Error deleting restock:', err);
-          showNotification('Error deleting restock record', 'error');
+        // Reload restock history if we're on that tab
+        if (document.getElementById('restock-report').classList.contains('active')) {
+          loadRestockHistory();
         }
+      } catch (err) {
+        console.error('Error deleting restock:', err);
+        showNotification('Error deleting restock record', 'error');
       }
+    }
 
-      async function openEditProductModal(productId){
-        const store = tx(['products']).objectStore('products');
-        const product = await promisifyRequest(store.get(productId));
-        if (!product) { showNotification('Product not found','error'); return; }
-        document.getElementById('edit-product-id').value = product.id;
-        document.getElementById('edit-product-name').value = product.name;
-        document.getElementById('edit-product-quantity').value = product.quantity;
-        document.getElementById('edit-product-cost').value = product.costPrice;
-        document.getElementById('edit-product-mrp').value = product.mrp;
-        document.getElementById('edit-product-tax').value = product.tax || 0;
-        document.getElementById('edit-product-modal').style.display = 'flex';
-      }
+    async function openEditProductModal(productId){
+      const store = tx(['products']).objectStore('products');
+      const product = await promisifyRequest(store.get(productId));
+      if (!product) { showNotification('Product not found','error'); return; }
+      document.getElementById('edit-product-id').value = product.id;
+      document.getElementById('edit-product-name').value = product.name;
+      document.getElementById('edit-product-quantity').value = product.quantity;
+      document.getElementById('edit-product-cost').value = product.costPrice;
+      document.getElementById('edit-product-mrp').value = product.mrp;
+      document.getElementById('edit-product-tax').value = product.tax || 0;
+      document.getElementById('edit-product-modal').style.display = 'flex';
+    }
 
-      async function updateProduct(product){
-        try{
-          const store = tx(['products'],'readwrite').objectStore('products');
-          const req = store.put(product);
-          await promisifyRequest(req);
-          showNotification('Product updated');
-          document.getElementById('edit-product-modal').style.display = 'none';
-          await loadProducts();
-          await loadLowStockAlerts();
-        }catch(err){ console.error(err); showNotification('Error updating product','error'); }
-      }
+    async function updateProduct(product){
+      try{
+        const store = tx(['products'],'readwrite').objectStore('products');
+        const req = store.put(product);
+        await promisifyRequest(req);
+        showNotification('Product updated');
+        document.getElementById('edit-product-modal').style.display = 'none';
+        await loadProducts();
+        await loadLowStockAlerts();
+      }catch(err){ console.error(err); showNotification('Error updating product','error'); }
+    }
 
-      async function deleteProduct(productId){
-        if (!confirm('Are you sure you want to delete this product? This will not delete related sales.')) return;
-        try{
-          const store = tx(['products'],'readwrite').objectStore('products');
-          await promisifyRequest(store.delete(productId));
-          showNotification('Product deleted');
-          await loadProducts();
-          await loadLowStockAlerts();
-        }catch(err){ console.error(err); showNotification('Error deleting product','error'); }
-      }
+    async function deleteProduct(productId){
+      if (!confirm('Are you sure you want to delete this product? This will not delete related sales.')) return;
+      try{
+        const store = tx(['products'],'readwrite').objectStore('products');
+        await promisifyRequest(store.delete(productId));
+        showNotification('Product deleted');
+        await loadProducts();
+        await loadLowStockAlerts();
+      }catch(err){ console.error(err); showNotification('Error deleting product','error'); }
+    }
 
-      // SALES
-      async function loadSales() {
-        showTabLoading('sales');
-        try {
-          const store = tx(['sales']).objectStore('sales');
-          const req = store.getAll();
-          const sales = await promisifyRequest(req);
+    // ========== FIRESTORE SALES INTEGRATION ==========
+    async function loadSales() {
+      showTabLoading('sales');
+      try {
+        // Use Firestore for real-time updates
+        const { onSnapshot, collection, db } = window.firestore;
+        
+        onSnapshot(collection(db, "sales"), (snapshot) => {
+          const sales = [];
+          snapshot.forEach((doc) => {
+            sales.push({ id: doc.id, ...doc.data() });
+          });
+          
           window._salesCache = sales;
           displayTodaySales(sales);
           displayAllSales(sales);
-        } finally {
           hideTabLoading('sales');
+          
+          // Update sync status
+          updateFirestoreStatus(true, "Connected to Cloud");
+        }, (error) => {
+          console.error("Firestore error:", error);
+          hideTabLoading('sales');
+          updateFirestoreStatus(false, "Sync error - using local data");
+          
+          // Fallback to IndexedDB if Firestore fails
+          loadSalesFromIndexedDB();
+        });
+      } catch (error) {
+        console.error("Error setting up Firestore listener:", error);
+        hideTabLoading('sales');
+        updateFirestoreStatus(false, "Offline - using local data");
+        
+        // Fallback to IndexedDB
+        loadSalesFromIndexedDB();
+      }
+    }
+    
+    // Fallback function to load sales from IndexedDB
+    async function loadSalesFromIndexedDB() {
+      try {
+        const store = tx(['sales']).objectStore('sales');
+        const req = store.getAll();
+        const sales = await promisifyRequest(req);
+        window._salesCache = sales;
+        displayTodaySales(sales);
+        displayAllSales(sales);
+      } catch (err) {
+        console.error("Error loading sales from IndexedDB:", err);
+        showNotification('Error loading sales', 'error');
+      }
+    }
+    
+    // Update Firestore connection status UI
+    function updateFirestoreStatus(connected, message) {
+      const statusEl = document.getElementById('firestore-status');
+      const statusTextEl = document.getElementById('firestore-status-text');
+      
+      if (statusEl && statusTextEl) {
+        statusEl.className = connected ? 'sync-status sync-active' : 'sync-status sync-inactive';
+        statusTextEl.textContent = message;
+      }
+    }
+
+    async function addSaleToFirestore(saleData) {
+      try {
+        const { addDoc, collection, db } = window.firestore;
+        await addDoc(collection(db, "sales"), saleData);
+        return true;
+      } catch (error) {
+        console.error("Error adding sale to Firestore:", error);
+        
+        // Fallback: Save to IndexedDB for later sync
+        try {
+          const store = tx(['sales'], 'readwrite').objectStore('sales');
+          await promisifyRequest(store.add(saleData));
+          showNotification('Sale saved locally (will sync when online)', 'warning');
+          return true;
+        } catch (indexedDBError) {
+          console.error("Error saving sale to IndexedDB:", indexedDBError);
+          return false;
         }
       }
+    }
 
-      function displayTodaySales(sales) {
-        const tbody = document.getElementById('today-sales');
-        if (!tbody) {
-          console.error("Element with ID 'today-sales' not found");
-          return;
-        }
+    function displayTodaySales(sales) {
+      const tbody = document.getElementById('today-sales');
+      if (!tbody) {
+        console.error("Element with ID 'today-sales' not found");
+        return;
+      }
 
-        const today = new Date().toISOString().split('T')[0];
-        const todaySales = sales.filter(sale => sale.date.startsWith(today));
+      const today = new Date().toISOString().split('T')[0];
+      const todaySales = sales.filter(sale => sale.date && sale.date.startsWith(today));
 
-        // Reverse the array to show latest sales first
-        todaySales.reverse();
+      // Reverse the array to show latest sales first
+      todaySales.reverse();
 
-        tbody.innerHTML = '';
-        if (todaySales.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No sales recorded today</td></tr>';
-          return;
-        }
+      tbody.innerHTML = '';
+      if (todaySales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No sales recorded today</td></tr>';
+        return;
+      }
 
-        todaySales.forEach(sale => {
-          const product = window._productsCache.find(p => p.id === sale.productId);
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${product ? product.name.toUpperCase() : 'Unknown Product'}</td> <!-- Product name in uppercase -->
-            <td>${sale.quantity}</td>
-            <td>${formatCurrency(sale.pricePerUnit)}</td>
-            <td>${formatCurrency(sale.quantity * sale.pricePerUnit)}</td>
-            <td>${new Date(sale.date).toLocaleTimeString()}</td>
-            <td class="action-buttons">
-              <button class="btn btn-primary edit-sale" data-id="${sale.id}">Edit</button>
-              <button class="btn btn-danger delete-sale" data-id="${sale.id}">Remove</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
+      todaySales.forEach(sale => {
+        const product = window._productsCache.find(p => p.id === sale.productId);
+        const tr = document.createElement('tr');
+        tr.innerHTML = 
+          `<td>${product ? product.name.toUpperCase() : 'Unknown Product'}</td>
+          <td>${sale.quantity}</td>
+          <td>${formatCurrency(sale.pricePerUnit)}</td>
+          <td>${formatCurrency(sale.quantity * sale.pricePerUnit)}</td>
+          <td>${new Date(sale.date).toLocaleTimeString()}</td>
+          <td class="action-buttons">
+            <button class="btn btn-primary edit-sale" data-id="${sale.id}">Edit</button>
+            <button class="btn btn-danger delete-sale" data-id="${sale.id}">Remove</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Add event listeners for edit/delete buttons
+      document.querySelectorAll('.edit-sale').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          openEditSaleModal(id);
         });
+      });
 
-        // Add event listeners for edit/delete buttons
-        document.querySelectorAll('.edit-sale').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const id = Number(e.currentTarget.dataset.id);
-            openEditSaleModal(id);
-          });
+      document.querySelectorAll('.delete-sale').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          deleteSale(id);
         });
+      });
+    }
 
-        document.querySelectorAll('.delete-sale').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const id = Number(e.currentTarget.dataset.id);
-            deleteSale(id);
-          });
+    function displayAllSales(sales) {
+      const tbody = document.getElementById('all-sales-history');
+      if (!tbody) {
+        console.error("Element with ID 'all-sales-history' not found");
+        return;
+      }
+
+      tbody.innerHTML = '';
+      if (sales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No sales yet</td></tr>';
+        return;
+      }
+
+      // Sort sales by date (newest first)
+      sales.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      sales.forEach(sale => {
+        const product = window._productsCache.find(p => p.id === sale.productId);
+        const profit = product ? (sale.pricePerUnit - product.costPrice) * sale.quantity : 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = 
+          `<td><input type="checkbox" class="sale-checkbox" data-id="${sale.id}"></td>
+          <td>${new Date(sale.date).toLocaleDateString()}</td>
+          <td>${product ? product.name.toUpperCase() : 'Unknown Product'}</td>
+          <td>${sale.quantity}</td>
+          <td>${formatCurrency(sale.quantity * sale.pricePerUnit)}</td>
+          <td>${formatCurrency(profit)}</td>
+          <td class="action-buttons">
+            <button class="btn btn-primary edit-sale" data-id="${sale.id}">Edit</button>
+            <button class="btn btn-danger delete-sale" data-id="${sale.id}">Remove</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Add event listeners for edit/delete buttons
+      document.querySelectorAll('.edit-sale').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          openEditSaleModal(id);
+        });
+      });
+
+      document.querySelectorAll('.delete-sale').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          deleteSale(id);
+        });
+      });
+    }
+
+    // Current bill items array
+    let currentBillItems = [];
+
+    // Function to add item to current bill
+    function addItemToBill() {
+      const productId = document.getElementById('sale-product-id').value;
+      const quantity = document.getElementById('sale-quantity').value;
+      const price = document.getElementById('sale-price').value;
+
+      if (!productId) {
+        showNotification('Please select a product', 'error');
+        return;
+      }
+
+      if (!validateNumberInput(document.getElementById('sale-quantity'), document.getElementById('quantity-error'), 0.01) ||
+          !validateNumberInput(document.getElementById('sale-price'), document.getElementById('price-error'), 0.01)) {
+        return;
+      }
+
+      const product = window._productsCache.find(p => p.id === Number(productId));
+      if (!product) {
+        showNotification('Product not found', 'error');
+        return;
+      }
+
+      // Check if product already exists in bill
+      const existingItemIndex = currentBillItems.findIndex(item => item.productId === Number(productId));
+
+      if (existingItemIndex !== -1) {
+        // Update existing item
+        currentBillItems[existingItemIndex].quantity += Number(quantity);
+        currentBillItems[existingItemIndex].total = currentBillItems[existingItemIndex].quantity * currentBillItems[existingItemIndex].pricePerUnit;
+      } else {
+        // Add new item
+        currentBillItems.push({
+          productId: Number(productId),
+          productName: product.name.toUpperCase(),
+          quantity: Number(quantity),
+          pricePerUnit: Number(price),
+          total: Number(quantity) * Number(price)
         });
       }
 
-      function displayAllSales(sales) {
-        const tbody = document.getElementById('all-sales-history');
-        if (!tbody) {
-          console.error("Element with ID 'all-sales-history' not found");
-          return;
-        }
+      // Update bill display
+      updateBillDisplay();
 
-        tbody.innerHTML = '';
-        if (sales.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No sales yet</td></tr>';
-          return;
-        }
+      // Clear form
+      document.getElementById('product-search').value = '';
+      document.getElementById('sale-product-id').value = '';
+      document.getElementById('sale-quantity').value = '1';
+      document.getElementById('sale-price').value = '';
 
-        // Sort sales by date (newest first)
-        sales.sort((a, b) => new Date(b.date) - new Date(a.date));
+      showNotification('Item added to bill');
+    }
 
-        sales.forEach(sale => {
-          const product = window._productsCache.find(p => p.id === sale.productId);
-          const profit = product ? (sale.pricePerUnit - product.costPrice) * sale.quantity : 0;
+    // Function to update bill display
+    function updateBillDisplay() {
+      const container = document.getElementById('bill-items-container');
+      const totalElement = document.getElementById('bill-total');
+      const billSection = document.getElementById('current-bill-items');
+      const generateBillBtn = document.getElementById('generate-bill-btn');
 
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><input type="checkbox" class="sale-checkbox" data-id="${sale.id}"></td>
-            <td>${new Date(sale.date).toLocaleDateString()}</td>
-            <td>${product ? product.name.toUpperCase() : 'Unknown Product'}</td> <!-- Product name in uppercase -->
-            <td>${sale.quantity}</td>
-            <td>${formatCurrency(sale.quantity * sale.pricePerUnit)}</td>
-            <td>${formatCurrency(profit)}</td>
-            <td class="action-buttons">
-              <button class="btn btn-primary edit-sale" data-id="${sale.id}">Edit</button>
-              <button class="btn btn-danger delete-sale" data-id="${sale.id}">Remove</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
+      container.innerHTML = '';
 
-        // Add event listeners for edit/delete buttons
-        document.querySelectorAll('.edit-sale').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const id = Number(e.currentTarget.dataset.id);
-            openEditSaleModal(id);
-          });
-        });
-
-        document.querySelectorAll('.delete-sale').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const id = Number(e.currentTarget.dataset.id);
-            deleteSale(id);
-          });
-        });
+      if (currentBillItems.length === 0) {
+        billSection.style.display = 'none';
+        generateBillBtn.disabled = true;
+        return;
       }
 
-      // Current bill items array
-      let currentBillItems = [];
+      billSection.style.display = 'block';
+      generateBillBtn.disabled = false;
 
-      // Function to add item to current bill
-      function addItemToBill() {
-        const productId = document.getElementById('sale-product-id').value;
-        const quantity = document.getElementById('sale-quantity').value;
-        const price = document.getElementById('sale-price').value;
+      let total = 0;
 
-        if (!productId) {
-          showNotification('Please select a product', 'error');
-          return;
+      currentBillItems.forEach((item, index) => {
+        total += item.total;
+
+        const itemElement = document.createElement('div');
+        itemElement.className = 'bill-item';
+        itemElement.innerHTML = 
+          `<div class="bill-item-header">
+            <strong>${item.productName}</strong>
+            <button class="remove-item" data-index="${index}">&times;</button>
+          </div>
+          <div class="bill-item-content">
+            <div>Quantity: ${item.quantity}</div>
+            <div>Price: ${formatCurrency(item.pricePerUnit)}</div>
+            <div>Total: ${formatCurrency(item.total)}</div>
+          </div>`;
+
+        container.appendChild(itemElement);
+      });
+
+      totalElement.textContent = `Total: ${formatCurrency(total)}`;
+
+      // Add event listeners to remove buttons
+      document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.target.dataset.index);
+          currentBillItems.splice(index, 1);
+          updateBillDisplay();
+        });
+      });
+    }
+
+    // Function to record sale from bill items
+    async function recordBillSale() {
+      if (currentBillItems.length === 0) {
+        showNotification('No items in bill', 'error');
+        return;
+      }
+
+      // Get customer info
+      const customerInfo = {
+        name: document.getElementById('customer-name').value,
+        phone: document.getElementById('customer-phone').value,
+        address: document.getElementById('customer-address').value
+      };
+
+      try {
+        const store = tx(['products'], 'readwrite');
+        const productsStore = store.objectStore('products');
+
+        // Process each item in the bill
+        for (const item of currentBillItems) {
+          // Get the product to update its quantity
+          const product = await promisifyRequest(productsStore.get(item.productId));
+          if (!product) {
+            showNotification(`Product not found: ${item.productName}`, 'error');
+            continue;
+          }
+
+          // Check if there's enough stock
+          if (product.quantity < item.quantity) {
+            showNotification(`Not enough stock for ${product.name}. Only ${product.quantity} available.`, 'error');
+            continue;
+          }
+
+          // Update product quantity
+          product.quantity -= item.quantity;
+          await promisifyRequest(productsStore.put(product));
+
+          // Add the sale to Firestore
+          const saleData = {
+            productId: item.productId,
+            quantity: item.quantity,
+            pricePerUnit: item.pricePerUnit,
+            date: new Date().toISOString(),
+            customerName: customerInfo.name,
+            customerPhone: customerInfo.phone,
+            customerAddress: customerInfo.address
+          };
+
+          await addSaleToFirestore(saleData);
         }
 
-        if (!validateNumberInput(document.getElementById('sale-quantity'), document.getElementById('quantity-error'), 0.01) ||
-            !validateNumberInput(document.getElementById('sale-price'), document.getElementById('price-error'), 0.01)) {
-          return;
-        }
+        // Generate and show bill
+        generateBillFromItems(currentBillItems, customerInfo);
 
-        const product = window._productsCache.find(p => p.id === Number(productId));
-        if (!product) {
-          showNotification('Product not found', 'error');
-          return;
-        }
-
-        // Check if product already exists in bill
-        const existingItemIndex = currentBillItems.findIndex(item => item.productId === Number(productId));
-
-        if (existingItemIndex !== -1) {
-          // Update existing item
-          currentBillItems[existingItemIndex].quantity += Number(quantity);
-          currentBillItems[existingItemIndex].total = currentBillItems[existingItemIndex].quantity * currentBillItems[existingItemIndex].pricePerUnit;
-        } else {
-          // Add new item
-          currentBillItems.push({
-            productId: Number(productId),
-            productName: product.name.toUpperCase(), // Product name in uppercase
-            quantity: Number(quantity),
-            pricePerUnit: Number(price),
-            total: Number(quantity) * Number(price)
-          });
-        }
-
-        // Update bill display
+        // Reset form and bill
+        document.getElementById('sale-form').reset();
+        currentBillItems = [];
         updateBillDisplay();
 
-        // Clear form
-        document.getElementById('product-search').value = '';
-        document.getElementById('sale-product-id').value = '';
-        document.getElementById('sale-quantity').value = '1';
-        document.getElementById('sale-price').value = '';
-
-        showNotification('Item added to bill');
+        await loadProducts();
+        await loadLowStockAlerts();
+        computeDashboardMetrics();
+      } catch (err) {
+        console.error(err);
+        showNotification('Error recording sale', 'error');
       }
+    }
 
-      // Function to update bill display
-      function updateBillDisplay() {
-        const container = document.getElementById('bill-items-container');
-        const totalElement = document.getElementById('bill-total');
-        const billSection = document.getElementById('current-bill-items');
-        const generateBillBtn = document.getElementById('generate-bill-btn');
+    // Function to generate bill from items
+    function generateBillFromItems(items, customerInfo) {
+      const billContent = generateBillContent(items, customerInfo);
+      document.getElementById('bill-content').innerHTML = billContent;
+      document.getElementById('bill-modal').style.display = 'flex';
+    }
 
-        container.innerHTML = '';
-
-        if (currentBillItems.length === 0) {
-          billSection.style.display = 'none';
-          generateBillBtn.disabled = true;
-          return;
-        }
-
-        billSection.style.display = 'block';
-        generateBillBtn.disabled = false;
-
-        let total = 0;
-
-        currentBillItems.forEach((item, index) => {
-          total += item.total;
-
-          const itemElement = document.createElement('div');
-          itemElement.className = 'bill-item';
-          itemElement.innerHTML = `
-            <div class="bill-item-header">
-              <strong>${item.productName}</strong>
-              <button class="remove-item" data-index="${index}">&times;</button>
-            </div>
-            <div class="bill-item-content">
-              <div>Quantity: ${item.quantity}</div>
-              <div>Price: ${formatCurrency(item.pricePerUnit)}</div>
-              <div>Total: ${formatCurrency(item.total)}</div>
-            </div>
-          `;
-
-          container.appendChild(itemElement);
-        });
-
-        totalElement.textContent = `Total: ${formatCurrency(total)}`;
-
-        // Add event listeners to remove buttons
-        document.querySelectorAll('.remove-item').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const index = parseInt(e.target.dataset.index);
-            currentBillItems.splice(index, 1);
-            updateBillDisplay();
-          });
-        });
-      }
-
-      // Function to record sale from bill items
-      async function recordBillSale() {
-        if (currentBillItems.length === 0) {
-          showNotification('No items in bill', 'error');
-          return;
-        }
-
-        // Get customer info
-        const customerInfo = {
-          name: document.getElementById('customer-name').value,
-          phone: document.getElementById('customer-phone').value,
-          address: document.getElementById('customer-address').value
-        };
-
-        // Offline queueing logic REMOVED - not needed for local-only app
-
+    // Function to generate bill for existing sale
+    async function generateBillForExistingSale(saleId) {
+      try {
+        // Try to get from Firestore first
+        let sale;
         try {
-          const store = tx(['sales', 'products'], 'readwrite');
-          const salesStore = store.objectStore('sales');
-          const productsStore = store.objectStore('products');
-
-          // Process each item in the bill
-          for (const item of currentBillItems) {
-            // Get the product to update its quantity
-            const product = await promisifyRequest(productsStore.get(item.productId));
-            if (!product) {
-              showNotification(`Product not found: ${item.productName}`, 'error');
-              continue;
-            }
-
-            // Check if there's enough stock
-            if (product.quantity < item.quantity) {
-              showNotification(`Not enough stock for ${product.name}. Only ${product.quantity} available.`, 'error');
-              continue;
-            }
-
-            // Update product quantity
-            product.quantity -= item.quantity;
-            await promisifyRequest(productsStore.put(product));
-
-            // Add the sale
-            const saleData = {
-              productId: item.productId,
-              quantity: item.quantity,
-              pricePerUnit: item.pricePerUnit,
-              date: new Date().toISOString(),
-              customerName: customerInfo.name,
-              customerPhone: customerInfo.phone,
-              customerAddress: customerInfo.address
-            };
-
-            await promisifyRequest(salesStore.add(saleData));
+          const { doc, getDoc, db } = window.firestore;
+          const saleDoc = await getDoc(doc(db, "sales", saleId));
+          if (saleDoc.exists()) {
+            sale = { id: saleDoc.id, ...saleDoc.data() };
           }
-
-          showNotification('Sale recorded successfully');
-
-          // Generate and show bill
-          generateBillFromItems(currentBillItems, customerInfo);
-
-          // Reset form and bill
-          document.getElementById('sale-form').reset();
-          currentBillItems = [];
-          updateBillDisplay();
-
-          await loadSales();
-          await loadProducts();
-          await loadLowStockAlerts();
-          computeDashboardMetrics();
-        } catch (err) {
-          console.error(err);
-          showNotification('Error recording sale', 'error');
-        }
-      }
-
-      // recordBillSaleFromOffline REMOVED - not needed for local-only app
-
-      // Function to generate bill from items
-      function generateBillFromItems(items, customerInfo) {
-        const billContent = generateBillContent(items, customerInfo);
-        document.getElementById('bill-content').innerHTML = billContent;
-        document.getElementById('bill-modal').style.display = 'flex';
-      }
-
-      // Function to generate bill for existing sale
-      async function generateBillForExistingSale(saleId) {
-        try {
+        } catch (firestoreError) {
+          console.error("Error getting sale from Firestore:", firestoreError);
+          // Fallback to IndexedDB
           const store = tx(['sales']).objectStore('sales');
-          const sale = await promisifyRequest(store.get(saleId));
-
-          if (!sale) {
-            showNotification('Sale not found', 'error');
-            return;
-          }
-
-          const product = window._productsCache.find(p => p.id === sale.productId);
-          if (!product) {
-            showNotification('Product not found', 'error');
-            return;
-          }
-
-          const customerInfo = {
-            name: sale.customerName || 'Walk-in Customer',
-            phone: sale.customerPhone || '',
-            address: sale.customerAddress || ''
-          };
-
-          const billItem = [{
-            productId: sale.productId,
-            productName: product.name.toUpperCase(), // Product name in uppercase
-            quantity: sale.quantity,
-            pricePerUnit: sale.pricePerUnit,
-            total: sale.quantity * sale.pricePerUnit
-          }];
-
-          generateBillFromItems(billItem, customerInfo);
-        } catch (err) {
-          console.error(err);
-          showNotification('Error generating bill', 'error');
+          sale = await promisifyRequest(store.get(Number(saleId)));
         }
-      }
-
-      // Function to generate bill for multiple selected sales
-      async function generateBillForSelectedSales(saleIds) {
-        try {
-          const store = tx(['sales']).objectStore('sales');
-          const sales = [];
-
-          for (const id of saleIds) {
-            const sale = await promisifyRequest(store.get(id));
-            if (sale) {
-              sales.push(sale);
-            }
-          }
-
-          if (sales.length === 0) {
-            showNotification('No sales selected', 'error');
-            return;
-          }
-
-          // Group sales by customer (assuming same customer for all selected sales)
-          const customerInfo = {
-            name: sales[0].customerName || 'Walk-in Customer',
-            phone: sales[0].customerPhone || '',
-            address: sales[0].customerAddress || ''
-          };
-
-          const billItems = [];
-
-          for (const sale of sales) {
-            const product = window._productsCache.find(p => p.id === sale.productId);
-            if (product) {
-              billItems.push({
-                productId: sale.productId,
-                productName: product.name.toUpperCase(), // Product name in uppercase
-                quantity: sale.quantity,
-                pricePerUnit: sale.pricePerUnit,
-                total: sale.quantity * sale.pricePerUnit
-              });
-            }
-          }
-
-          generateBillFromItems(billItems, customerInfo);
-        } catch (err) {
-          console.error(err);
-          showNotification('Error generating bill', 'error');
-        }
-      }
-
-      // Function to open modal for selecting multiple sales for bill
-      function openSelectSalesModal() {
-        const tbody = document.getElementById('select-sales-table');
-        tbody.innerHTML = '';
-
-        if (!window._salesCache || window._salesCache.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No sales available</td></tr>';
-        } else {
-          window._salesCache.forEach(sale => {
-            const product = window._productsCache.find(p => p.id === sale.productId);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><input type="checkbox" class="select-sale-checkbox" data-id="${sale.id}"></td>
-              <td>${new Date(sale.date).toLocaleDateString()}</td>
-              <td>${product ? product.name.toUpperCase() : 'Unknown Product'}</td> <!-- Product name in uppercase -->
-              <td>${sale.quantity}</td>
-              <td>${formatCurrency(sale.quantity * sale.pricePerUnit)}</td>
-            `;
-            tbody.appendChild(tr);
-          });
-        }
-
-        document.getElementById('select-sales-modal').style.display = 'flex';
-      }
-
-      async function openEditSaleModal(saleId) {
-        const store = tx(['sales']).objectStore('sales');
-        const sale = await promisifyRequest(store.get(saleId));
 
         if (!sale) {
           showNotification('Sale not found', 'error');
@@ -1599,1343 +1585,1398 @@
         }
 
         const product = window._productsCache.find(p => p.id === sale.productId);
-
-        document.getElementById('edit-sale-id').value = sale.id;
-        document.getElementById('edit-sale-product').value = product ? product.name.toUpperCase() : 'Unknown Product';
-        document.getElementById('edit-sale-quantity').value = sale.quantity;
-        document.getElementById('edit-sale-price').value = sale.pricePerUnit;
-        document.getElementById('edit-sale-modal').style.display = 'flex';
-      }
-
-      async function updateSale(updatedSale) {
-        try {
-          const store = tx(['sales', 'products'], 'readwrite');
-          const salesStore = store.objectStore('sales');
-          const productsStore = store.objectStore('products');
-
-          // Get the original sale and product
-          const originalSale = await promisifyRequest(salesStore.get(updatedSale.id));
-          const product = await promisifyRequest(productsStore.get(originalSale.productId));
-
-          // Calculate quantity difference
-          const quantityDiff = originalSale.quantity - updatedSale.quantity;
-
-          // Update product quantity
-          product.quantity += quantityDiff;
-          await promisifyRequest(productsStore.put(product));
-
-          // Update the sale
-          await promisifyRequest(salesStore.put(updatedSale));
-
-          showNotification('Sale updated successfully');
-          document.getElementById('edit-sale-modal').style.display = 'none';
-
-          await loadSales();
-          await loadProducts();
-          await loadLowStockAlerts();
-          computeDashboardMetrics();
-        } catch (err) {
-          console.error(err);
-          showNotification('Error updating sale', 'error');
-        }
-      }
-
-      async function deleteSale(saleId) {
-        if (!confirm('Are you sure you want to delete this sale?')) return;
-
-        try {
-          const store = tx(['sales', 'products'], 'readwrite');
-          const salesStore = store.objectStore('sales');
-          const productsStore = store.objectStore('products');
-
-          // Get the sale to restore product quantity
-          const sale = await promisifyRequest(salesStore.get(saleId));
-          if (!sale) {
-            showNotification('Sale not found', 'error');
-            return;
-          }
-
-          // Get the product and restore quantity
-          const product = await promisifyRequest(productsStore.get(sale.productId));
-          if (product) {
-            product.quantity += sale.quantity;
-            await promisifyRequest(productsStore.put(product));
-          }
-
-          // Delete the sale
-          await promisifyRequest(salesStore.delete(saleId));
-
-          showNotification('Sale deleted successfully');
-
-          await loadSales();
-          await loadProducts();
-          await loadLowStockAlerts();
-          computeDashboardMetrics();
-        } catch (err) {
-          console.error(err);
-          showNotification('Error deleting sale', 'error');
-        }
-      }
-
-      // ========== AUTCOMPLETE FUNCTIONALITY ==========
-      function setupProductSearchAutocomplete() {
-        const searchInput = document.getElementById('product-search');
-        const autocompleteList = document.getElementById('autocomplete-list');
-        const productIdInput = document.getElementById('sale-product-id');
-        const salePriceInput = document.getElementById('sale-price');
-
-        if (!searchInput || !autocompleteList) {
-          console.error("Autocomplete elements not found");
-          return;
-        }
-
-        searchInput.addEventListener('input', function() {
-          const value = this.value.trim().toLowerCase();
-          autocompleteList.innerHTML = '';
-          autocompleteList.style.display = 'none';
-
-          if (value.length < 1) return;
-
-          const matches = (window._productsCache || []).filter(product =>
-            product.name.toLowerCase().includes(value) && product.quantity > 0
-          );
-
-          if (matches.length === 0) return;
-
-          autocompleteList.style.display = 'block';
-          matches.forEach(product => {
-            const item = document.createElement('div');
-            item.className = 'autocomplete-item';
-            item.textContent = `${product.name.toUpperCase()} (Stock: ${product.quantity})`; // Product name in uppercase
-            item.dataset.id = product.id;
-            item.dataset.mrp = product.mrp;
-
-            item.addEventListener('click', function() {
-              searchInput.value = product.name.toUpperCase(); // Product name in uppercase
-              productIdInput.value = product.id;
-              salePriceInput.value = product.mrp;
-              autocompleteList.style.display = 'none';
-            });
-
-            autocompleteList.appendChild(item);
-          });
-        });
-
-        // Hide autocomplete when clicking outside
-        document.addEventListener('click', function(e) {
-          if (!e.target.closest('.search-box')) {
-            autocompleteList.style.display = 'none';
-          }
-        });
-
-        // Keyboard navigation
-        searchInput.addEventListener('keydown', function(e) {
-          const items = autocompleteList.querySelectorAll('.autocomplete-item');
-          if (items.length === 0) return;
-
-          let activeItem = autocompleteList.querySelector('.autocomplete-active');
-
-          if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (!activeItem) {
-              items[0].classList.add('autocomplete-active');
-            } else {
-              activeItem.classList.remove('autocomplete-active');
-              if (activeItem.nextSibling) {
-                activeItem.nextSibling.classList.add('autocomplete-active');
-              } else {
-                items[0].classList.add('autocomplete-active');
-              }
-            }
-          } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (!activeItem) {
-              items[items.length - 1].classList.add('autocomplete-active');
-              } else {
-              activeItem.classList.remove('autocomplete-active');
-              if (activeItem.previousSibling) {
-                activeItem.previousSibling.classList.add('autocomplete-active');
-              } else {
-                items[items.length - 1].classList.add('autocomplete-active');
-              }
-            }
-          } else if (e.key === 'Enter' && activeItem) {
-            e.preventDefault();
-            activeItem.click();
-          }
-        });
-      }
-
-      // ========== DASHBOARD METRICS ==========
-      function computeDashboardMetrics() {
-        // Today's metrics
-        if (!window._salesCache || !window._productsCache) {
-          console.log("Data not loaded yet");
-          return;
-        }
-        const today = new Date().toISOString().split('T')[0];
-        const todaySales = window._salesCache ? window._salesCache.filter(sale => sale.date.startsWith(today)) : [];
-
-        let todaySalesValue = 0;
-        let todayProfitValue = 0;
-
-        todaySales.forEach(sale => {
-          const product = window._productsCache.find(p => p.id === sale.productId);
-          if (product) {
-            todaySalesValue += sale.quantity * sale.pricePerUnit;
-            todayProfitValue += (sale.pricePerUnit - product.costPrice) * sale.quantity;
-          }
-        });
-
-        document.getElementById('today-sales-value').textContent = formatCurrency(todaySalesValue);
-        document.getElementById('today-profit-value').textContent = formatCurrency(todayProfitValue);
-
-        // Monthly metrics (current month)
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-
-        const monthlySales = window._salesCache ? window._salesCache.filter(sale => {
-          const saleDate = new Date(sale.date);
-          return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
-        }) : [];
-
-        let monthlySalesValue = 0;
-        let monthlyProfitValue = 0;
-
-        monthlySales.forEach(sale => {
-          const product = window._productsCache.find(p => p.id === sale.productId);
-          if (product) {
-            monthlySalesValue += sale.quantity * sale.pricePerUnit;
-            monthlyProfitValue += (sale.pricePerUnit - product.costPrice) * sale.quantity;
-          }
-        });
-
-        document.getElementById('monthly-sales').textContent = formatCurrency(monthlySalesValue);
-        document.getElementById('monthly-profit').textContent = formatCurrency(monthlyProfitValue);
-
-        // Running average (last 30 days)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const recentSales = window._salesCache ? window._salesCache.filter(sale => {
-          return new Date(sale.date) >= thirtyDaysAgo;
-        }) : [];
-
-        let recentSalesValue = 0;
-        recentSales.forEach(sale => {
-          recentSalesValue += sale.quantity * sale.pricePerUnit;
-        });
-
-        const uniqueDates = new Set(recentSales.map(s => s.date.split('T')[0]));
-        const daysWithSales = Math.max(1, uniqueDates.size);
-        const dailyAverage = recentSalesValue / daysWithSales;
-        document.getElementById('running-average').textContent = formatCurrency(dailyAverage);
-      }
-
-      // NEW: Function to record restock
-      async function recordRestock(restockData) {
-        try {
-          const store = tx(['restocks', 'products'], 'readwrite');
-          const restocksStore = store.objectStore('restocks');
-          const productsStore = store.objectStore('products');
-
-          // Add restock record
-          await promisifyRequest(restocksStore.add(restockData));
-
-          // Update product
-          const product = await promisifyRequest(productsStore.get(restockData.productId));
-          product.quantity += restockData.quantityAdded;
-          product.costPrice = restockData.newCostPrice;
-          product.mrp = restockData.newMRP;
-
-          await promisifyRequest(productsStore.put(product));
-
-          showNotification('Product restocked successfully');
-          return true;
-        } catch (err) {
-          console.error('Error recording restock:', err);
-          showNotification('Error restocking product', 'error');
-          return false;
-        }
-      }
-
-      // NEW: Function to open restock modal
-      async function openRestockModal(productId) {
-        const store = tx(['products']).objectStore('products');
-        const product = await promisifyRequest(store.get(productId));
-
         if (!product) {
           showNotification('Product not found', 'error');
           return;
         }
 
-        document.getElementById('restock-product-id').value = product.id;
-        document.getElementById('restock-product-name').value = product.name.toUpperCase();
-        document.getElementById('restock-current-quantity').value = product.quantity;
-        document.getElementById('restock-quantity').value = 0;
-        document.getElementById('restock-cost').value = product.costPrice;
-        document.getElementById('restock-mrp').value = product.mrp;
+        const customerInfo = {
+          name: sale.customerName || 'Walk-in Customer',
+          phone: sale.customerPhone || '',
+          address: sale.customerAddress || ''
+        };
 
-        document.getElementById('restock-modal').style.display = 'flex';
+        const billItem = [{
+          productId: sale.productId,
+          productName: product.name.toUpperCase(),
+          quantity: sale.quantity,
+          pricePerUnit: sale.pricePerUnit,
+          total: sale.quantity * sale.pricePerUnit
+        }];
+
+        generateBillFromItems(billItem, customerInfo);
+      } catch (err) {
+        console.error(err);
+        showNotification('Error generating bill', 'error');
       }
+    }
 
-      // NEW: Function to load restock history
-      async function loadRestockHistory(fromDate = null, toDate = null) {
-        try {
-          const store = tx(['restocks']).objectStore('restocks');
-          let restocks = await promisifyRequest(store.getAll());
+    // Function to generate bill for multiple selected sales
+    async function generateBillForSelectedSales(saleIds) {
+      try {
+        const sales = [];
 
-          // Filter by date if provided
-          if (fromDate && toDate) {
-            restocks = restocks.filter(restock => {
-              const restockDate = restock.date.split('T')[0];
-              return restockDate >= fromDate && restockDate <= toDate;
-            });
+        for (const id of saleIds) {
+          // Try Firestore first
+          try {
+            const { doc, getDoc, db } = window.firestore;
+            const saleDoc = await getDoc(doc(db, "sales", id));
+            if (saleDoc.exists()) {
+              sales.push({ id: saleDoc.id, ...saleDoc.data() });
+            }
+          } catch (firestoreError) {
+            console.error("Error getting sale from Firestore:", firestoreError);
+            // Fallback to IndexedDB
+            const store = tx(['sales']).objectStore('sales');
+            const sale = await promisifyRequest(store.get(Number(id)));
+            if (sale) {
+              sales.push(sale);
+            }
           }
-
-          // Sort by date (newest first)
-          restocks.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-          displayRestockHistory(restocks);
-        } catch (err) {
-          console.error('Error loading restock history:', err);
-          showNotification('Error loading restock history', 'error');
         }
-      }
 
-      // NEW: Function to display restock history
-      async function displayRestockHistory(restocks) {
-        const container = document.getElementById('restock-history');
-        container.innerHTML = '';
-
-        // Add event delegation for restock history buttons
-        // Removed event listener as it was causing issues with re-rendering and dynamic buttons
-
-        if (!restocks || restocks.length === 0) {
-          container.innerHTML = '<div style="text-align:center; padding:20px; color:#777;">No restock history found</div>';
+        if (sales.length === 0) {
+          showNotification('No sales selected', 'error');
           return;
         }
 
-        for (const restock of restocks) {
-          const product = await getProduct(restock.productId);
+        // Group sales by customer (assuming same customer for all selected sales)
+        const customerInfo = {
+          name: sales[0].customerName || 'Walk-in Customer',
+          phone: sales[0].customerPhone || '',
+          address: sales[0].customerAddress || ''
+        };
 
-          const restockItem = document.createElement('div');
-          restockItem.className = 'restock-item';
-          restockItem.innerHTML = `
-            <div class="restock-header">
-              <strong>${product ? product.name.toUpperCase() : 'Unknown Product'}</strong>
-              <span class="small">Date: ${new Date(restock.date).toLocaleDateString()}</span>
-            </div>
-            <div class="restock-details">
-              <div>Quantity Added: <strong>${restock.quantityAdded}</strong></div>
-              <div>Cost Price: <strong>${formatCurrency(restock.newCostPrice)}</strong></div>
-              <div>MRP: <strong>${formatCurrency(restock.newMRP)}</strong></div>
-              <div>Previous Stock: <strong>${restock.previousQuantity}</strong></div>
-              <!-- Add Actions buttons -->
-              <div class="restock-actions">
-                <button class="btn btn-primary edit-restock" data-id="${restock.id}">Edit</button>
-                <button class="btn btn-danger delete-restock" data-id="${restock.id}">Delete</button>
-              </div>
-            </div>
-          `;
+        const billItems = [];
 
-          container.appendChild(restockItem);
-
-          const editBtn = restockItem.querySelector('.edit-restock');
-          const deleteBtn = restockItem.querySelector('.delete-restock');
-
-          editBtn.addEventListener('click', () => {
-            openEditRestockModal(restock.id);
-          });
-
-          deleteBtn.addEventListener('click', () => {
-            deleteRestock(restock.id);
-          });
-        }
-      }
-
-      // NEW: Helper function to get product
-      async function getProduct(productId) {
-        try {
-          const store = tx(['products']).objectStore('products');
-          return await promisifyRequest(store.get(productId));
-        } catch (err) {
-          console.error('Error getting product:', err);
-          return null;
-        }
-      }
-
-      // ========== LOW STOCK ALERTS ==========
-      async function loadLowStockAlerts() {
-        showTabLoading('dashboard');
-        try {
-          const products = window._productsCache || [];
-          const lowStockProducts = products.filter(product => product.quantity <= 5); // Threshold of 5 units
-
-          const tbody = document.getElementById('low-stock-alerts');
-          if (!tbody) {
-            console.error("Element with ID 'low-stock-alerts' not found");
-            return;
-          }
-
-          tbody.innerHTML = '';
-
-          if (lowStockProducts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No low stock items</td></tr>';
-            return;
-          }
-
-          lowStockProducts.forEach(product => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${product.name.toUpperCase()}</td>
-              <td>${product.quantity}</td>
-              <td>
-                <button class="btn btn-primary restock-product" data-id="${product.id}">Restock</button>
-              </td>
-            `;
-            tbody.appendChild(tr);
-          });
-
-          // Add event listeners to restock buttons
-          document.querySelectorAll('.restock-product').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-              const id = Number(e.currentTarget.dataset.id);
-              openRestockModal(id);
+        for (const sale of sales) {
+          const product = window._productsCache.find(p => p.id === sale.productId);
+          if (product) {
+            billItems.push({
+              productId: sale.productId,
+              productName: product.name.toUpperCase(),
+              quantity: sale.quantity,
+              pricePerUnit: sale.pricePerUnit,
+              total: sale.quantity * sale.pricePerUnit
             });
-          });
-
-          // NEW: Setup search for low stock items
-          setupLowStockSearch();
-        } finally {
-          hideTabLoading('dashboard');
-        }
-      }
-
-      // NEW: Setup search for low stock items
-      function setupLowStockSearch() {
-        const searchInput = document.getElementById('low-stock-search');
-        if (!searchInput) return;
-
-        searchInput.addEventListener('input', function() {
-          const searchTerm = this.value.toLowerCase();
-          const rows = document.querySelectorAll('#low-stock-alerts tr');
-
-          // Skip the first row if it's a "no items" message
-          let hasResults = false;
-
-          rows.forEach(row => {
-            if (row.cells.length < 2) return;
-
-            const productName = row.cells[0].textContent.toLowerCase();
-            if (productName.includes(searchTerm)) {
-              row.style.display = '';
-              hasResults = true;
-            } else {
-              row.style.display = 'none';
-            }
-          });
-
-          // Show message if no results
-          if (!hasResults && rows.length > 0 && rows[0].cells[0].colSpan !== 3) {
-            // Remove any existing "No matching products found" row
-            const existingNoResultsRow = tbody.querySelector('.no-results-row');
-            if (existingNoResultsRow) existingNoResultsRow.remove();
-
-            const noResultsRow = document.createElement('tr');
-            noResultsRow.className = 'no-results-row'; // Add class for easy removal
-            noResultsRow.innerHTML = '<td colspan="3" style="text-align:center;">No matching products found</td>';
-            document.getElementById('low-stock-alerts').appendChild(noResultsRow);
-          } else if (hasResults) {
-            // If there are results, remove any "No matching products found" row
-            const existingNoResultsRow = document.getElementById('low-stock-alerts').querySelector('.no-results-row');
-            if (existingNoResultsRow) existingNoResultsRow.remove();
           }
+        }
+
+        generateBillFromItems(billItems, customerInfo);
+      } catch (err) {
+        console.error(err);
+        showNotification('Error generating bill', 'error');
+      }
+    }
+
+    // Function to open modal for selecting multiple sales for bill
+    function openSelectSalesModal() {
+      const tbody = document.getElementById('select-sales-table');
+      tbody.innerHTML = '';
+
+      if (!window._salesCache || window._salesCache.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No sales available</td></tr>';
+      } else {
+        window._salesCache.forEach(sale => {
+          const product = window._productsCache.find(p => p.id === sale.productId);
+          const tr = document.createElement('tr');
+          tr.innerHTML = 
+            `<td><input type="checkbox" class="select-sale-checkbox" data-id="${sale.id}"></td>
+            <td>${new Date(sale.date).toLocaleDateString()}</td>
+            <td>${product ? product.name.toUpperCase() : 'Unknown Product'}</td>
+            <td>${sale.quantity}</td>
+            <td>${formatCurrency(sale.quantity * sale.pricePerUnit)}</td>`;
+          tbody.appendChild(tr);
         });
       }
 
-      // ========== STOCK VALUE ==========
-      function updateStockValue(products) {
-        let totalValue = 0;
-        products.forEach(product => {
-          totalValue += product.quantity * product.costPrice;
-        });
-        document.getElementById('total-stock-value').textContent = formatCurrency(totalValue);
+      document.getElementById('select-sales-modal').style.display = 'flex';
+    }
+
+    async function openEditSaleModal(saleId) {
+      let sale;
+      
+      // Try Firestore first
+      try {
+        const { doc, getDoc, db } = window.firestore;
+        const saleDoc = await getDoc(doc(db, "sales", saleId));
+        if (saleDoc.exists()) {
+          sale = { id: saleDoc.id, ...saleDoc.data() };
+        }
+      } catch (firestoreError) {
+        console.error("Error getting sale from Firestore:", firestoreError);
+        // Fallback to IndexedDB
+        const store = tx(['sales']).objectStore('sales');
+        sale = await promisifyRequest(store.get(Number(saleId)));
       }
 
-
-      // ========== BILL GENERATION ==========
-      function generateBillContent(items, customerInfo) {
-        const today = new Date();
-        const billNumber = 'RAJ-' + today.getFullYear() + '-' +
-                          (today.getMonth() + 1).toString().padStart(2, '0') + '-' +
-                          Math.floor(1000 + Math.random() * 9000);
-
-        let totalAmount = 0;
-        items.forEach(item => {
-          totalAmount += item.total;
-        });
-
-        let itemsHTML = '';
-        items.forEach(item => {
-          itemsHTML += `
-            <tr>
-              <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.productName}</td>
-              <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${item.quantity}</td>
-              <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${formatCurrency(item.pricePerUnit)}</td>
-              <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${formatCurrency(item.total)}</td>
-            </tr>
-          `;
-        });
-
-        let billHTML = `
-          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px;">
-            <h2 style="margin-bottom: 5px; color: var(--primary);">Raj Enterprise</h2>
-            <p style="margin: 0; color: #666;">Stock & Sales Management</p>
-            <h6 style="margin: 0; color: #666;">PH - 6386620244</h6>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <div>
-              <p style="margin: 5px 0;"><strong>Bill No:</strong> ${billNumber}</p>
-              <p style="margin: 5px 0;"><strong>Date:</strong> ${today.toLocaleDateString()}</p>
-              <p style="margin: 5px 0;"><strong>Time:</strong> ${today.toLocaleTimeString()}</p>
-            </div>
-            <div>
-              <p style="margin: 5px 0;"><strong>Customer:</strong> ${customerInfo.name || 'Walk-in Customer'}</p>
-              ${customerInfo.phone ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${customerInfo.phone}</p>` : ''}
-            </div>
-          </div>
-
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <thead>
-              <tr style="background: #f5f5f5;">
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Product</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 1px solid #ddd;">Quantity</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 1px solid #ddd;">Price</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 1px solid #ddd;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHTML}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd;"><strong>Grand Total:</strong></td>
-                <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd;"><strong>${formatCurrency(totalAmount)}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-
-          ${customerInfo.address ? `
-          <div style="margin-bottom: 20px;">
-            <p style="margin: 5px 0;"><strong>Delivery Address:</strong></p>
-            <p style="margin: 5px 0; padding: 8px; background: #f9f9f9; border-radius: 4px;">${customerInfo.address}</p>
-          </div>
-          ` : ''}
-
-          <div style="margin-top: 30px; text-align: center; color: #777;">
-            <p>Thank you for your business!</p>
-            <p>Raj Enterprise - Quality Products, Best Prices</p>
-          </div>
-        `;
-
-        return billHTML;
+      if (!sale) {
+        showNotification('Sale not found', 'error');
+        return;
       }
 
-      function printBill() {
-        const billContent = document.getElementById('bill-content').innerHTML;
-        const originalContent = document.body.innerHTML;
+      const product = window._productsCache.find(p => p.id === sale.productId);
 
-        document.body.innerHTML = billContent;
-        window.print();
-        document.body.innerHTML = originalContent;
+      document.getElementById('edit-sale-id').value = sale.id;
+      document.getElementById('edit-sale-product').value = product ? product.name.toUpperCase() : 'Unknown Product';
+      document.getElementById('edit-sale-quantity').value = sale.quantity;
+      document.getElementById('edit-sale-price').value = sale.pricePerUnit;
+      document.getElementById('edit-sale-modal').style.display = 'flex';
+    }
 
-        // Reload the page to restore functionality
-        location.reload();
+    async function updateSale(updatedSale) {
+      try {
+        const store = tx(['products'], 'readwrite');
+        const productsStore = store.objectStore('products');
+
+        // Get the original sale and product
+        let originalSale;
+        
+        // Try Firestore first
+        try {
+          const { doc, getDoc, db } = window.firestore;
+          const saleDoc = await getDoc(doc(db, "sales", updatedSale.id));
+          if (saleDoc.exists()) {
+            originalSale = { id: saleDoc.id, ...saleDoc.data() };
+          }
+        } catch (firestoreError) {
+          console.error("Error getting sale from Firestore:", firestoreError);
+          // Fallback to IndexedDB
+          const salesStore = tx(['sales']).objectStore('sales');
+          originalSale = await promisifyRequest(salesStore.get(Number(updatedSale.id)));
+        }
+
+        if (!originalSale) {
+          showNotification('Sale not found', 'error');
+          return;
+        }
+
+        const product = await promisifyRequest(productsStore.get(originalSale.productId));
+
+        // Calculate quantity difference
+        const quantityDiff = originalSale.quantity - updatedSale.quantity;
+
+        // Update product quantity
+        product.quantity += quantityDiff;
+        await promisifyRequest(productsStore.put(product));
+
+        // Update the sale in Firestore
+        try {
+          const { doc, updateDoc, db } = window.firestore;
+          await updateDoc(doc(db, "sales", updatedSale.id), {
+            quantity: updatedSale.quantity,
+            pricePerUnit: updatedSale.pricePerUnit
+          });
+        } catch (firestoreError) {
+          console.error("Error updating sale in Firestore:", firestoreError);
+          // Fallback to IndexedDB
+          const salesStore = tx(['sales'], 'readwrite').objectStore('sales');
+          await promisifyRequest(salesStore.put(updatedSale));
+        }
+
+        showNotification('Sale updated successfully');
+        document.getElementById('edit-sale-modal').style.display = 'none';
+
+        await loadSales();
+        await loadProducts();
+        await loadLowStockAlerts();
+        computeDashboardMetrics();
+      } catch (err) {
+        console.error(err);
+        showNotification('Error updating sale', 'error');
+      }
+    }
+
+    async function deleteSale(saleId) {
+      if (!confirm('Are you sure you want to delete this sale?')) return;
+
+      try {
+        const store = tx(['products'], 'readwrite');
+        const productsStore = store.objectStore('products');
+
+        // Get the sale to restore product quantity
+        let sale;
+        
+        // Try Firestore first
+        try {
+          const { doc, getDoc, db } = window.firestore;
+          const saleDoc = await getDoc(doc(db, "sales", saleId));
+          if (saleDoc.exists()) {
+            sale = { id: saleDoc.id, ...saleDoc.data() };
+          }
+        } catch (firestoreError) {
+          console.error("Error getting sale from Firestore:", firestoreError);
+          // Fallback to IndexedDB
+          const salesStore = tx(['sales']).objectStore('sales');
+          sale = await promisifyRequest(salesStore.get(Number(saleId)));
+        }
+
+        if (!sale) {
+          showNotification('Sale not found', 'error');
+          return;
+        }
+
+        // Get the product and restore quantity
+        const product = await promisifyRequest(productsStore.get(sale.productId));
+        if (product) {
+          product.quantity += sale.quantity;
+          await promisifyRequest(productsStore.put(product));
+        }
+
+        // Delete the sale from Firestore
+        try {
+          const { doc, deleteDoc, db } = window.firestore;
+          await deleteDoc(doc(db, "sales", saleId));
+        } catch (firestoreError) {
+          console.error("Error deleting sale from Firestore:", firestoreError);
+          // Fallback to IndexedDB
+          const salesStore = tx(['sales'], 'readwrite').objectStore('sales');
+          await promisifyRequest(salesStore.delete(Number(saleId)));
+        }
+
+        showNotification('Sale deleted successfully');
+
+        await loadSales();
+        await loadProducts();
+        await loadLowStockAlerts();
+        computeDashboardMetrics();
+      } catch (err) {
+        console.error(err);
+        showNotification('Error deleting sale', 'error');
+      }
+    }
+
+    // ========== AUTCOMPLETE FUNCTIONALITY ==========
+    function setupProductSearchAutocomplete() {
+      const searchInput = document.getElementById('product-search');
+      const autocompleteList = document.getElementById('autocomplete-list');
+      const productIdInput = document.getElementById('sale-product-id');
+      const salePriceInput = document.getElementById('sale-price');
+
+      if (!searchInput || !autocompleteList) {
+        console.error("Autocomplete elements not found");
+        return;
       }
 
-      // Add this function to set up stock search autocomplete
-      function setupStockSearchAutocomplete() {
-        const searchInput = document.getElementById('stock-search');
-        const autocompleteList = document.createElement('div');
-        autocompleteList.className = 'autocomplete-items';
-        autocompleteList.id = 'autocomplete-list-stock';
+      searchInput.addEventListener('input', function() {
+        const value = this.value.trim().toLowerCase();
+        autocompleteList.innerHTML = '';
         autocompleteList.style.display = 'none';
-        searchInput.parentNode.appendChild(autocompleteList);
 
-        searchInput.addEventListener('input', function() {
-          const value = this.value.trim().toLowerCase();
-          autocompleteList.innerHTML = '';
+        if (value.length < 1) return;
+
+        const matches = (window._productsCache || []).filter(product =>
+          product.name.toLowerCase().includes(value) && product.quantity > 0
+        );
+
+        if (matches.length === 0) return;
+
+        autocompleteList.style.display = 'block';
+        matches.forEach(product => {
+          const item = document.createElement('div');
+          item.className = 'autocomplete-item';
+          item.textContent = `${product.name.toUpperCase()} (Stock: ${product.quantity})`;
+          item.dataset.id = product.id;
+          item.dataset.mrp = product.mrp;
+
+          item.addEventListener('click', function() {
+            searchInput.value = product.name.toUpperCase();
+            productIdInput.value = product.id;
+            salePriceInput.value = product.mrp;
+            autocompleteList.style.display = 'none';
+          });
+
+          autocompleteList.appendChild(item);
+        });
+      });
+
+      // Hide autocomplete when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-box')) {
           autocompleteList.style.display = 'none';
+        }
+      });
 
-          if (value.length < 1) return;
+      // Keyboard navigation
+      searchInput.addEventListener('keydown', function(e) {
+        const items = autocompleteList.querySelectorAll('.autocomplete-item');
+        if (items.length === 0) return;
 
-          const matches = (window._productsCache || []).filter(product =>
-            product.name.toLowerCase().includes(value)
-          );
+        let activeItem = autocompleteList.querySelector('.autocomplete-active');
 
-          if (matches.length === 0) return;
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (!activeItem) {
+            items[0].classList.add('autocomplete-active');
+          } else {
+            activeItem.classList.remove('autocomplete-active');
+            if (activeItem.nextSibling) {
+              activeItem.nextSibling.classList.add('autocomplete-active');
+            } else {
+              items[0].classList.add('autocomplete-active');
+            }
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (!activeItem) {
+            items[items.length - 1].classList.add('autocomplete-active');
+          } else {
+            activeItem.classList.remove('autocomplete-active');
+            if (activeItem.previousSibling) {
+              activeItem.previousSibling.classList.add('autocomplete-active');
+            } else {
+              items[items.length - 1].classList.add('autocomplete-active');
+            }
+          }
+        } else if (e.key === 'Enter' && activeItem) {
+          e.preventDefault();
+          activeItem.click();
+        }
+      });
+    }
 
-          autocompleteList.style.display = 'block';
-          matches.forEach(product => {
-            const item = document.createElement('div');
-            item.className = 'autocomplete-item';
-            item.textContent = `${product.name.toUpperCase()} (Stock: ${product.quantity})`;
-            item.dataset.id = product.id;
+    // ========== DASHBOARD METRICS ==========
+    function computeDashboardMetrics() {
+      // Today's metrics
+      if (!window._salesCache || !window._productsCache) {
+        console.log("Data not loaded yet");
+        return;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      const todaySales = window._salesCache ? window._salesCache.filter(sale => sale.date && sale.date.startsWith(today)) : [];
 
-            item.addEventListener('click', function() {
-              searchInput.value = product.name.toUpperCase();
-              autocompleteList.style.display = 'none';
-              // Optional: Filter the stock table to show only this product
-              filterStockTable(product.id);
-            });
+      let todaySalesValue = 0;
+      let todayProfitValue = 0;
 
-            autocompleteList.appendChild(item);
+      todaySales.forEach(sale => {
+        const product = window._productsCache.find(p => p.id === sale.productId);
+        if (product) {
+          todaySalesValue += sale.quantity * sale.pricePerUnit;
+          todayProfitValue += (sale.pricePerUnit - product.costPrice) * sale.quantity;
+        }
+      });
+
+      document.getElementById('today-sales-value').textContent = formatCurrency(todaySalesValue);
+      document.getElementById('today-profit-value').textContent = formatCurrency(todayProfitValue);
+
+      // Monthly metrics (current month)
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+
+      const monthlySales = window._salesCache ? window._salesCache.filter(sale => {
+        if (!sale.date) return false;
+        const saleDate = new Date(sale.date);
+        return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+      }) : [];
+
+      let monthlySalesValue = 0;
+      let monthlyProfitValue = 0;
+
+      monthlySales.forEach(sale => {
+        const product = window._productsCache.find(p => p.id === sale.productId);
+        if (product) {
+          monthlySalesValue += sale.quantity * sale.pricePerUnit;
+          monthlyProfitValue += (sale.pricePerUnit - product.costPrice) * sale.quantity;
+        }
+      });
+
+      document.getElementById('monthly-sales').textContent = formatCurrency(monthlySalesValue);
+      document.getElementById('monthly-profit').textContent = formatCurrency(monthlyProfitValue);
+
+      // Running average (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const recentSales = window._salesCache ? window._salesCache.filter(sale => {
+        if (!sale.date) return false;
+        return new Date(sale.date) >= thirtyDaysAgo;
+      }) : [];
+
+      let recentSalesValue = 0;
+      recentSales.forEach(sale => {
+        recentSalesValue += sale.quantity * sale.pricePerUnit;
+      });
+
+      const uniqueDates = new Set(recentSales.map(s => s.date.split('T')[0]));
+      const daysWithSales = Math.max(1, uniqueDates.size);
+      const dailyAverage = recentSalesValue / daysWithSales;
+      document.getElementById('running-average').textContent = formatCurrency(dailyAverage);
+    }
+
+    // NEW: Function to record restock
+    async function recordRestock(restockData) {
+      try {
+        const store = tx(['restocks', 'products'], 'readwrite');
+        const restocksStore = store.objectStore('restocks');
+        const productsStore = store.objectStore('products');
+
+        // Add restock record
+        await promisifyRequest(restocksStore.add(restockData));
+
+        // Update product
+        const product = await promisifyRequest(productsStore.get(restockData.productId));
+        product.quantity += restockData.quantityAdded;
+        product.costPrice = restockData.newCostPrice;
+        product.mrp = restockData.newMRP;
+
+        await promisifyRequest(productsStore.put(product));
+
+        showNotification('Product restocked successfully');
+        return true;
+      } catch (err) {
+        console.error('Error recording restock:', err);
+        showNotification('Error restocking product', 'error');
+        return false;
+      }
+    }
+
+    // NEW: Function to open restock modal
+    async function openRestockModal(productId) {
+      const store = tx(['products']).objectStore('products');
+      const product = await promisifyRequest(store.get(productId));
+
+      if (!product) {
+        showNotification('Product not found', 'error');
+        return;
+      }
+
+      document.getElementById('restock-product-id').value = product.id;
+      document.getElementById('restock-product-name').value = product.name.toUpperCase();
+      document.getElementById('restock-current-quantity').value = product.quantity;
+      document.getElementById('restock-quantity').value = 0;
+      document.getElementById('restock-cost').value = product.costPrice;
+      document.getElementById('restock-mrp').value = product.mrp;
+
+      document.getElementById('restock-modal').style.display = 'flex';
+    }
+
+    // NEW: Function to load restock history
+    async function loadRestockHistory(fromDate = null, toDate = null) {
+      try {
+        const store = tx(['restocks']).objectStore('restocks');
+        let restocks = await promisifyRequest(store.getAll());
+
+        // Filter by date if provided
+        if (fromDate && toDate) {
+          restocks = restocks.filter(restock => {
+            const restockDate = restock.date.split('T')[0];
+            return restockDate >= fromDate && restockDate <= toDate;
+          });
+        }
+
+        // Sort by date (newest first)
+        restocks.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        displayRestockHistory(restocks);
+      } catch (err) {
+        console.error('Error loading restock history:', err);
+        showNotification('Error loading restock history', 'error');
+      }
+    }
+
+    // NEW: Function to display restock history
+    async function displayRestockHistory(restocks) {
+      const container = document.getElementById('restock-history');
+      container.innerHTML = '';
+
+      if (!restocks || restocks.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#777;">No restock history found</div>';
+        return;
+      }
+
+      for (const restock of restocks) {
+        const product = await getProduct(restock.productId);
+
+        const restockItem = document.createElement('div');
+        restockItem.className = 'restock-item';
+        restockItem.innerHTML = 
+          `<div class="restock-header">
+            <strong>${product ? product.name.toUpperCase() : 'Unknown Product'}</strong>
+            <span class="small">Date: ${new Date(restock.date).toLocaleDateString()}</span>
+          </div>
+          <div class="restock-details">
+            <div>Quantity Added: <strong>${restock.quantityAdded}</strong></div>
+            <div>Cost Price: <strong>${formatCurrency(restock.newCostPrice)}</strong></div>
+            <div>MRP: <strong>${formatCurrency(restock.newMRP)}</strong></div>
+            <div>Previous Stock: <strong>${restock.previousQuantity}</strong></div>
+            <!-- Add Actions buttons -->
+            <div class="restock-actions">
+              <button class="btn btn-primary edit-restock" data-id="${restock.id}">Edit</button>
+              <button class="btn btn-danger delete-restock" data-id="${restock.id}">Delete</button>
+            </div>
+          </div>`;
+
+        container.appendChild(restockItem);
+
+        const editBtn = restockItem.querySelector('.edit-restock');
+        const deleteBtn = restockItem.querySelector('.delete-restock');
+
+        editBtn.addEventListener('click', () => {
+          openEditRestockModal(restock.id);
+        });
+
+        deleteBtn.addEventListener('click', () => {
+          deleteRestock(restock.id);
+        });
+      }
+    }
+
+    // NEW: Helper function to get product
+    async function getProduct(productId) {
+      try {
+        const store = tx(['products']).objectStore('products');
+        return await promisifyRequest(store.get(productId));
+      } catch (err) {
+        console.error('Error getting product:', err);
+        return null;
+      }
+    }
+
+    // ========== LOW STOCK ALERTS ==========
+    async function loadLowStockAlerts() {
+      showTabLoading('dashboard');
+      try {
+        const products = window._productsCache || [];
+        const lowStockProducts = products.filter(product => product.quantity <= 5); // Threshold of 5 units
+
+        const tbody = document.getElementById('low-stock-alerts');
+        if (!tbody) {
+          console.error("Element with ID 'low-stock-alerts' not found");
+          return;
+        }
+
+        tbody.innerHTML = '';
+
+        if (lowStockProducts.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No low stock items</td></tr>';
+          return;
+        }
+
+        lowStockProducts.forEach(product => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = 
+            `<td>${product.name.toUpperCase()}</td>
+            <td>${product.quantity}</td>
+            <td>
+              <button class="btn btn-primary restock-product" data-id="${product.id}">Restock</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+
+        // Add event listeners to restock buttons
+        document.querySelectorAll('.restock-product').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = Number(e.currentTarget.dataset.id);
+            openRestockModal(id);
           });
         });
 
-        // Hide autocomplete when clicking outside
-        document.addEventListener('click', function(e) {
-          if (!e.target.closest('.search-box')) {
-            autocompleteList.style.display = 'none';
-          }
-        });
+        // NEW: Setup search for low stock items
+        setupLowStockSearch();
+      } finally {
+        hideTabLoading('dashboard');
       }
+    }
 
-      // Add this function to filter the stock table
-      function filterStockTable(productId = null) {
-        const table = document.getElementById('stock-table');
-        const rows = table.querySelectorAll('tr');
+    // NEW: Setup search for low stock items
+    function setupLowStockSearch() {
+      const searchInput = document.getElementById('low-stock-search');
+      if (!searchInput) return;
+
+      searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#low-stock-alerts tr');
+
+        // Skip the first row if it's a "no items" message
+        let hasResults = false;
 
         rows.forEach(row => {
-          if (row.cells.length < 2) return; // Skip header/empty rows
+          if (row.cells.length < 2) return;
 
-          // Find the product ID from the 'edit-product' button
-          const editButton = row.querySelector('button.edit-product');
-          if (editButton) {
-            const rowProductId = editButton.dataset.id;
-            if (productId && rowProductId != productId) {
-              row.style.display = 'none';
-            } else {
-              row.style.display = '';
-            }
+          const productName = row.cells[0].textContent.toLowerCase();
+          if (productName.includes(searchTerm)) {
+            row.style.display = '';
+            hasResults = true;
+          } else {
+            row.style.display = 'none';
           }
         });
-      }
 
-      // ========== EVENT LISTENERS ==========
-        document.addEventListener('DOMContentLoaded', async function() {
-          // Initialize database
-          try {
-            await openDB();
-            await loadInitialData();
+        // Show message if no results
+        if (!hasResults && rows.length > 0 && rows[0].cells[0].colSpan !== 3) {
+          // Remove any existing "No matching products found" row
+          const existingNoResultsRow = tbody.querySelector('.no-results-row');
+          if (existingNoResultsRow) existingNoResultsRow.remove();
 
-            // Setup autocomplete
-            setupProductSearchAutocomplete();
-            setupStockSearchAutocomplete();
+          const noResultsRow = document.createElement('tr');
+          noResultsRow.className = 'no-results-row';
+          noResultsRow.innerHTML = '<td colspan="3" style="text-align:center;">No matching products found</td>';
+          document.getElementById('low-stock-alerts').appendChild(noResultsRow);
+        } else if (hasResults) {
+          // If there are results, remove any "No matching products found" row
+          const existingNoResultsRow = document.getElementById('low-stock-alerts').querySelector('.no-results-row');
+          if (existingNoResultsRow) existingNoResultsRow.remove();
+        }
+      });
+    }
 
-            // Update current date
-            document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-GB', {
-              day: '2-digit', month: 'short', year: 'numeric'
-            }) + ' ▼';
+    // ========== STOCK VALUE ==========
+    function updateStockValue(products) {
+      let totalValue = 0;
+      products.forEach(product => {
+        totalValue += product.quantity * product.costPrice;
+      });
+      document.getElementById('total-stock-value').textContent = formatCurrency(totalValue);
+    }
 
-            // Setup main tab switching
-            document.querySelectorAll('.tab').forEach(tab => {
-              tab.addEventListener('click', function() {
-                const target = this.dataset.target;
+    // ========== BILL GENERATION ==========
+    function generateBillContent(items, customerInfo) {
+      const today = new Date();
+      const billNumber = 'RAJ-' + today.getFullYear() + '-' +
+                        (today.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                        Math.floor(1000 + Math.random() * 9000);
 
-                // Update active tab
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
+      let totalAmount = 0;
+      items.forEach(item => {
+        totalAmount += item.total;
+      });
 
-                // Update active content section
-                document.querySelectorAll('.content-section').forEach(section => {
-                  section.classList.remove('active');
-                });
-                document.getElementById(target).classList.add('active');
+      let itemsHTML = '';
+      items.forEach(item => {
+        itemsHTML += 
+          `<tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.productName}</td>
+            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${item.quantity}</td>
+            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${formatCurrency(item.pricePerUnit)}</td>
+            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${formatCurrency(item.total)}</td>
+          </tr>`;
+      });
 
-                // Load data for the selected tab if needed
-                if (target === 'reports') {
-                  // Set default date range for reports (current month)
-                  const today = new Date();
-                  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      let billHTML = 
+        `<div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px;">
+          <h2 style="margin-bottom: 5px; color: var(--primary);">Raj Enterprise</h2>
+          <p style="margin: 0; color: #666;">Stock & Sales Management</p>
+          <h6 style="margin: 0; color: #666;">PH - 6386620244</h6>
+        </div>
 
-                  document.getElementById('report-from').value = firstDay.toISOString().split('T')[0];
-                  document.getElementById('report-to').value = lastDay.toISOString().split('T')[0];
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <p style="margin: 5px 0;"><strong>Bill No:</strong> ${billNumber}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${today.toLocaleDateString()}</p>
+            <p style="margin: 5px 0;"><strong>Time:</strong> ${today.toLocaleTimeString()}</p>
+          </div>
+          <div>
+            <p style="margin: 5px 0;"><strong>Customer:</strong> ${customerInfo.name || 'Walk-in Customer'}</p>
+            ${customerInfo.phone ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${customerInfo.phone}</p>` : ''}
+          </div>
+        </div>
 
-                  // Also set dates for restock report
-                  document.getElementById('restock-from').value = firstDay.toISOString().split('T')[0];
-                  document.getElementById('restock-to').value = lastDay.toISOString().split('T')[0];
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background: #f5f5f5;">
+              <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Product</th>
+              <th style="padding: 10px; text-align: right; border-bottom: 1px solid #ddd;">Quantity</th>
+              <th style="padding: 10px; text-align: right; border-bottom: 1px solid #ddd;">Price</th>
+              <th style="padding: 10px; text-align: right; border-bottom: 1px solid #ddd;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHTML}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd;"><strong>Grand Total:</strong></td>
+              <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd;"><strong>${formatCurrency(totalAmount)}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
 
-                  // Load initial reports
-                  generateReport();
-                  loadRestockHistory();
-                }
-              });
+        ${customerInfo.address ? 
+        `<div style="margin-bottom: 20px;">
+          <p style="margin: 5px 0;"><strong>Delivery Address:</strong></p>
+          <p style="margin: 5px 0; padding: 8px; background: #f9f9f9; border-radius: 4px;">${customerInfo.address}</p>
+        </div>` : ''}
+
+        <div style="margin-top: 30px; text-align: center; color: #777;">
+          <p>Thank you for your business!</p>
+          <p>Raj Enterprise - Quality Products, Best Prices</p>
+        </div>`;
+
+      return billHTML;
+    }
+
+    function printBill() {
+      const billContent = document.getElementById('bill-content').innerHTML;
+      const originalContent = document.body.innerHTML;
+
+      document.body.innerHTML = billContent;
+      window.print();
+      document.body.innerHTML = originalContent;
+
+      // Reload the page to restore functionality
+      location.reload();
+    }
+
+    // Add this function to set up stock search autocomplete
+    function setupStockSearchAutocomplete() {
+      const searchInput = document.getElementById('stock-search');
+      const autocompleteList = document.createElement('div');
+      autocompleteList.className = 'autocomplete-items';
+      autocompleteList.id = 'autocomplete-list-stock';
+      autocompleteList.style.display = 'none';
+      searchInput.parentNode.appendChild(autocompleteList);
+
+      searchInput.addEventListener('input', function() {
+        const value = this.value.trim().toLowerCase();
+        autocompleteList.innerHTML = '';
+        autocompleteList.style.display = 'none';
+
+        if (value.length < 1) return;
+
+        const matches = (window._productsCache || []).filter(product =>
+          product.name.toLowerCase().includes(value)
+        );
+
+        if (matches.length === 0) return;
+
+        autocompleteList.style.display = 'block';
+        matches.forEach(product => {
+          const item = document.createElement('div');
+          item.className = 'autocomplete-item';
+          item.textContent = `${product.name.toUpperCase()} (Stock: ${product.quantity})`;
+          item.dataset.id = product.id;
+
+          item.addEventListener('click', function() {
+            searchInput.value = product.name.toUpperCase();
+            autocompleteList.style.display = 'none';
+            // Optional: Filter the stock table to show only this product
+            filterStockTable(product.id);
+          });
+
+          autocompleteList.appendChild(item);
+        });
+      });
+
+      // Hide autocomplete when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-box')) {
+          autocompleteList.style.display = 'none';
+        }
+      });
+    }
+
+    // Add this function to filter the stock table
+    function filterStockTable(productId = null) {
+      const table = document.getElementById('stock-table');
+      const rows = table.querySelectorAll('tr');
+
+      rows.forEach(row => {
+        if (row.cells.length < 2) return; // Skip header/empty rows
+
+        // Find the product ID from the 'edit-product' button
+        const editButton = row.querySelector('button.edit-product');
+        if (editButton) {
+          const rowProductId = editButton.dataset.id;
+          if (productId && rowProductId != productId) {
+            row.style.display = 'none';
+          } else {
+            row.style.display = '';
+          }
+        }
+      });
+    }
+
+    // ========== SINGLE DOMContentLoaded Listener ==========
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Initialize database
+      try {
+        await openDB();
+        await loadInitialData();
+
+        // Setup autocomplete
+        setupProductSearchAutocomplete();
+        setupStockSearchAutocomplete();
+
+        // Update current date
+        document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-GB', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        }) + ' ▼';
+
+        // Setup main tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.addEventListener('click', function() {
+            const target = this.dataset.target;
+
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            // Update active content section
+            document.querySelectorAll('.content-section').forEach(section => {
+              section.classList.remove('active');
             });
+            document.getElementById(target).classList.add('active');
 
-            // Setup report tab switching
-            document.querySelectorAll('.report-tab').forEach(tab => {
-              tab.addEventListener('click', function() {
-                const target = this.dataset.target;
+            // Load data for the selected tab if needed
+            if (target === 'reports') {
+              // Set default date range for reports (current month)
+              const today = new Date();
+              const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+              const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-                // Update active report tab
-                document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
+              document.getElementById('report-from').value = firstDay.toISOString().split('T')[0];
+              document.getElementById('report-to').value = lastDay.toISOString().split('T')[0];
 
-                // Update active report content
-                document.querySelectorAll('.report-content').forEach(content => {
-                  content.classList.remove('active');
-                });
-                document.getElementById(target).classList.add('active');
+              // Also set dates for restock report
+              document.getElementById('restock-from').value = firstDay.toISOString().split('T')[0];
+              document.getElementById('restock-to').value = lastDay.toISOString().split('T')[0];
 
-                // Load data if needed
-                if (target === 'restock-report') {
-                  loadRestockHistory();
-                }
-              });
-            });
-
-            // Generate report button
-            document.getElementById('generate-report').addEventListener('click', function() {
+              // Load initial reports
               generateReport();
-            });
-
-            // Generate restock report button
-            document.getElementById('generate-restock-report').addEventListener('click', function() {
-              const fromDate = document.getElementById('restock-from').value;
-              const toDate = document.getElementById('restock-to').value;
-              loadRestockHistory(fromDate, toDate);
-            });
-
-          // NEW: Restock form submission
-          document.getElementById('restock-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            // Validate form
-            if (!validateNumberInput(document.getElementById('restock-quantity'), document.getElementById('restock-quantity-error'), 1) ||
-                !validateNumberInput(document.getElementById('restock-cost'), document.getElementById('restock-cost-error'), 0.01) ||
-                !validateNumberInput(document.getElementById('restock-mrp'), document.getElementById('restock-mrp-error'), 0.01)) {
-              return;
-            }
-
-            const productId = Number(document.getElementById('restock-product-id').value);
-            const quantityAdded = Number(document.getElementById('restock-quantity').value);
-            const newCostPrice = Number(document.getElementById('restock-cost').value);
-            const newMRP = Number(document.getElementById('restock-mrp').value);
-            const currentQuantity = Number(document.getElementById('restock-current-quantity').value);
-
-            // Record restock
-            const success = await recordRestock({
-              productId: productId,
-              quantityAdded: quantityAdded,
-              previousQuantity: currentQuantity,
-              newCostPrice: newCostPrice,
-              newMRP: newMRP,
-              date: new Date().toISOString()
-            });
-
-            if (success) {
-              document.getElementById('restock-modal').style.display = 'none';
-              await loadProducts();
-              await loadLowStockAlerts();
-              computeDashboardMetrics();
+              loadRestockHistory();
             }
           });
+        });
 
-          // NEW: Close restock modal
-          document.getElementById('close-restock').addEventListener('click', function() {
+        // Setup report tab switching
+        document.querySelectorAll('.report-tab').forEach(tab => {
+          tab.addEventListener('click', function() {
+            const target = this.dataset.target;
+
+            // Update active report tab
+            document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            // Update active report content
+            document.querySelectorAll('.report-content').forEach(content => {
+              content.classList.remove('active');
+            });
+            document.getElementById(target).classList.add('active');
+
+            // Load data if needed
+            if (target === 'restock-report') {
+              loadRestockHistory();
+            }
+          });
+        });
+
+        // Generate report button
+        document.getElementById('generate-report').addEventListener('click', function() {
+          generateReport();
+        });
+
+        // Generate restock report button
+        document.getElementById('generate-restock-report').addEventListener('click', function() {
+          const fromDate = document.getElementById('restock-from').value;
+          const toDate = document.getElementById('restock-to').value;
+          loadRestockHistory(fromDate, toDate);
+        });
+
+        // NEW: Restock form submission
+        document.getElementById('restock-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          // Validate form
+          if (!validateNumberInput(document.getElementById('restock-quantity'), document.getElementById('restock-quantity-error'), 1) ||
+              !validateNumberInput(document.getElementById('restock-cost'), document.getElementById('restock-cost-error'), 0.01) ||
+              !validateNumberInput(document.getElementById('restock-mrp'), document.getElementById('restock-mrp-error'), 0.01)) {
+            return;
+          }
+
+          const productId = Number(document.getElementById('restock-product-id').value);
+          const quantityAdded = Number(document.getElementById('restock-quantity').value);
+          const newCostPrice = Number(document.getElementById('restock-cost').value);
+          const newMRP = Number(document.getElementById('restock-mrp').value);
+          const currentQuantity = Number(document.getElementById('restock-current-quantity').value);
+
+          // Record restock
+          const success = await recordRestock({
+            productId: productId,
+            quantityAdded: quantityAdded,
+            previousQuantity: currentQuantity,
+            newCostPrice: newCostPrice,
+            newMRP: newMRP,
+            date: new Date().toISOString()
+          });
+
+          if (success) {
             document.getElementById('restock-modal').style.display = 'none';
-          });
+            await loadProducts();
+            await loadLowStockAlerts();
+            computeDashboardMetrics();
+          }
+        });
 
-          document.getElementById('close-edit-restock').addEventListener('click', function() {
+        // NEW: Close restock modal
+        document.getElementById('close-restock').addEventListener('click', function() {
+          document.getElementById('restock-modal').style.display = 'none';
+        });
+
+        document.getElementById('close-edit-restock').addEventListener('click', function() {
           document.getElementById('edit-restock-modal').style.display = 'none';
         });
 
-        } catch (err) {
-          console.error('Failed to initialize app:', err);
-          showNotification('Failed to initialize application', 'error');
-        }
-      });
+        // Add to Bill button
+        document.getElementById('add-to-bill').addEventListener('click', addItemToBill);
 
-      // ========== RESTOCK HISTORY ==========
-        async function loadRestockHistory(fromDate = null, toDate = null) {
-          try {
-            const store = tx(['restocks']).objectStore('restocks');
-            let restocks = await promisifyRequest(store.getAll());
-
-            // Filter by date if provided
-            if (fromDate && toDate) {
-              restocks = restocks.filter(restock => {
-                const restockDate = restock.date.split('T')[0];
-                return restockDate >= fromDate && restockDate <= toDate;
-              });
-            }
-
-            // Sort by date (newest first)
-            restocks.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            displayRestockHistory(restocks);
-          } catch (err) {
-            console.error('Error loading restock history:', err);
-            showNotification('Error loading restock history', 'error');
-          }
-        }
-
-        // displayRestockHistory function is already above, keep it as is.
-
-      // === Offline Queue Helpers REMOVED ===
-      // loadOfflineQueue, saveOfflineQueue, enqueueOffline REMOVED
-
-      document.addEventListener('DOMContentLoaded', async function() {
-        // Initialize database
-        try {
-          await openDB();
-          await loadInitialData();
-
-          // Setup autocomplete
-          setupProductSearchAutocomplete();
-          setupStockSearchAutocomplete();
-
-          // Update current date
-          document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-GB', {
-            day: '2-digit', month: 'short', year: 'numeric'
-          }) + ' ▼';
-
-          // Setup tab switching
-          document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-              const target = this.dataset.target;
-
-              // Update active tab
-              document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-              this.classList.add('active');
-              // window.offlineQueue = loadOfflineQueue(); REMOVED
-              // updateSyncButton(); REMOVED
-
-              // Make sure this event listener exists
-              document.getElementById('generate-report').addEventListener('click', function() {
-                  generateReport();
-              });
-
-              // Update active content section
-              document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-              });
-              document.getElementById(target).classList.add('active');
-              // window.offlineQueue = loadOfflineQueue(); REMOVED
-              // updateSyncButton(); REMOVED
-
-              // Load data for the selected tab if needed
-              if (target === 'reports') {
-                // Set default date range for reports (current month)
-                const today = new Date();
-                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-                document.getElementById('report-from').value = firstDay.toISOString().split('T')[0];
-                document.getElementById('report-to').value = lastDay.toISOString().split('T')[0];
-              }
-            });
-          });
-
-          // Add to Bill button
-          document.getElementById('add-to-bill').addEventListener('click', addItemToBill);
-
-          // Generate Bill button
-          document.getElementById('generate-bill-btn').addEventListener('click', function() {
-            if (currentBillItems.length === 0) {
-              showNotification('No items in bill', 'error');
-              return;
-            }
-
-            // Get customer info
-            const customerInfo = {
-              name: document.getElementById('customer-name').value,
-              phone: document.getElementById('customer-phone').value,
-              address: document.getElementById('customer-address').value
-            };
-
-            generateBillFromItems(currentBillItems, customerInfo);
-          });
-
-          // Load saved report filters when page loads
-          loadReportFilters();
-          // Generate report if filters are set
-          if (localStorage.getItem('lastReportFrom') && localStorage.getItem('lastReportTo')) {
-            generateReport();
-          }
-
-          // Sale form submission
-          document.getElementById('sale-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await recordBillSale();
-          });
-
-          // Generate bill from existing sale
-          document.getElementById('generate-bill-from-sale').addEventListener('click', function() {
-            openSelectSalesModal();
-          });
-
-          // Generate bill from selected sales
-          document.getElementById('generate-bill-from-selected').addEventListener('click', function() {
-            const selectedSales = [];
-            document.querySelectorAll('.select-sale-checkbox:checked').forEach(checkbox => {
-              selectedSales.push(parseInt(checkbox.dataset.id));
-            });
-
-            if (selectedSales.length === 0) {
-              showNotification('Please select at least one sale', 'error');
-              return;
-            }
-
-            generateBillForSelectedSales(selectedSales);
-            document.getElementById('select-sales-modal').style.display = 'none';
-          });
-
-          // Product form submission
-          document.getElementById('product-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            // Validate form
-            if (!validateRequiredInput(document.getElementById('product-name'), document.getElementById('name-error')) ||
-                !validateNumberInput(document.getElementById('product-quantity'), document.getElementById('init-qty-error'), 0) ||
-                !validateNumberInput(document.getElementById('product-cost'), document.getElementById('cost-error'), 0) ||
-                !validateNumberInput(document.getElementById('product-mrp'), document.getElementById('mrp-error'), 0) ||
-                !validateNumberInput(document.getElementById('product-tax'), document.getElementById('tax-error'), 0)) {
-              return;
-            }
-
-            // Add product
-            await addProduct({
-              name: document.getElementById('product-name').value,
-              quantity: Number(document.getElementById('product-quantity').value),
-              costPrice: Number(document.getElementById('product-cost').value),
-              mrp: Number(document.getElementById('product-mrp').value),
-              tax: Number(document.getElementById('product-tax').value)
-            });
-          });
-
-          // Edit product form submission
-          document.getElementById('edit-product-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            // Validate form
-            if (!validateRequiredInput(document.getElementById('edit-product-name'), document.getElementById('edit-name-error')) ||
-                !validateNumberInput(document.getElementById('edit-product-quantity'), document.getElementById('edit-qty-error'), 0) ||
-                !validateNumberInput(document.getElementById('edit-product-cost'), document.getElementById('edit-cost-error'), 0) ||
-                !validateNumberInput(document.getElementById('edit-product-mrp'), document.getElementById('edit-mrp-error'), 0) ||
-                !validateNumberInput(document.getElementById('edit-product-tax'), document.getElementById('edit-tax-error'), 0)) {
-              return;
-            }
-
-            // Update product
-            await updateProduct({
-              id: Number(document.getElementById('edit-product-id').value),
-              name: document.getElementById('edit-product-name').value,
-              quantity: Number(document.getElementById('edit-product-quantity').value),
-              costPrice: Number(document.getElementById('edit-product-cost').value),
-              mrp: Number(document.getElementById('edit-product-mrp').value),
-              tax: Number(document.getElementById('edit-product-tax').value)
-            });
-          });
-
-          // Edit sale form submission
-          document.getElementById('edit-sale-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            // Validate form
-            if (!validateNumberInput(document.getElementById('edit-sale-quantity'), document.getElementById('edit-sale-qty-error'), 0.01) ||
-                !validateNumberInput(document.getElementById('edit-sale-price'), document.getElementById('edit-sale-price-error'), 0.01)) {
-              return;
-            }
-
-            // Update sale
-            await updateSale({
-              id: Number(document.getElementById('edit-sale-id').value),
-              productId: window._salesCache.find(s => s.id === Number(document.getElementById('edit-sale-id').value)).productId,
-              quantity: Number(document.getElementById('edit-sale-quantity').value),
-              pricePerUnit: Number(document.getElementById('edit-sale-price').value),
-              date: window._salesCache.find(s => s.id === Number(document.getElementById('edit-sale-id').value)).date
-            });
-          });
-
-          // Close modals
-          document.getElementById('close-edit-product').addEventListener('click', function() {
-            document.getElementById('edit-product-modal').style.display = 'none';
-          });
-
-          document.getElementById('close-edit-sale').addEventListener('click', function() {
-            document.getElementById('edit-sale-modal').style.display = 'none';
-          });
-
-          // Close bill modal
-          document.getElementById('close-bill').addEventListener('click', function() {
-            document.getElementById('bill-modal').style.display = 'none';
-          });
-
-          // Close select sales modal
-          document.getElementById('close-select-sales').addEventListener('click', function() {
-            document.getElementById('select-sales-modal').style.display = 'none';
-          });
-
-          // Print bill button
-          document.getElementById('print-bill-btn').addEventListener('click', printBill);
-
-          // Generate report
-          document.getElementById('generate-report').addEventListener('click', function() {
-            generateReport();
-          });
-
-          // Check online status
-          checkOnlineStatus(); // Only updates UI, no sync
-          window.addEventListener('online', checkOnlineStatus);
-          window.addEventListener('offline', checkOnlineStatus);
-
-        } catch (err) {
-          console.error('Failed to initialize app:', err);
-          showNotification('Failed to initialize application', 'error');
-        }
-      });
-      // === ADD THE NEW CODE RIGHT AFTER THESE EXISTING FORM LISTENERS ===
-
-          // Edit restock form submission
-          document.getElementById('edit-restock-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            // Validate form
-            if (!validateNumberInput(document.getElementById('edit-restock-quantity'), document.getElementById('edit-restock-quantity-error'), 1) ||
-                !validateNumberInput(document.getElementById('edit-restock-cost'), document.getElementById('edit-restock-cost-error'), 0.01) ||
-                !validateNumberInput(document.getElementById('edit-restock-mrp'), document.getElementById('edit-restock-mrp-error'), 0.01)) {
-              return;
-            }
-
-            try {
-              const store = tx(['restocks', 'products'], 'readwrite');
-              const restocksStore = store.objectStore('restocks');
-              const productsStore = store.objectStore('products');
-
-              const restockId = Number(document.getElementById('edit-restock-id').value);
-              const newQuantity = Number(document.getElementById('edit-restock-quantity').value);
-              const newCost = Number(document.getElementById('edit-restock-cost').value);
-              const newMRP = Number(document.getElementById('edit-restock-mrp').value);
-
-              // Get the original restock record
-              const restock = await promisifyRequest(restocksStore.get(restockId));
-
-              if (!restock) {
-                showNotification('Restock record not found', 'error');
-                return;
-              }
-
-              // Get the product
-              const product = await promisifyRequest(productsStore.get(restock.productId));
-
-              // Calculate the quantity difference
-              const quantityDiff = newQuantity - restock.quantityAdded;
-
-              // Update product quantity
-              product.quantity += quantityDiff;
-              product.costPrice = newCost;
-              product.mrp = newMRP;
-
-              await promisifyRequest(productsStore.put(product));
-
-              // Update the restock record
-              restock.quantityAdded = newQuantity;
-              restock.newCostPrice = newCost;
-              restock.newMRP = newMRP;
-
-              await promisifyRequest(restocksStore.put(restock));
-
-              showNotification('Restock record updated successfully');
-              document.getElementById('edit-restock-modal').style.display = 'none';
-
-              // Reload data
-              await loadProducts();
-              await loadLowStockAlerts();
-              computeDashboardMetrics();
-
-              // Reload restock history if we're on that tab
-              if (document.getElementById('restock-report').classList.contains('active')) {
-                loadRestockHistory();
-              }
-            } catch (err) {
-              console.error('Error updating restock:', err);
-              showNotification('Error updating restock record', 'error');
-            }
-          });
-
-      // ========== ONLINE STATUS ==========
-      function checkOnlineStatus() {
-        const connectionEl = document.getElementById('connection');
-        const connText = document.getElementById('conn-text');
-        // offlineNotice element and sync logic REMOVED
-
-        if (navigator.onLine) {
-          connectionEl.classList.remove('offline');
-          connectionEl.classList.add('online');
-          connText.textContent = 'Online';
-        } else {
-          connectionEl.classList.remove('online');
-          connectionEl.classList.add('offline');
-          connText.textContent = 'Offline';
-          showNotification('Working offline. Data saved locally.', 'warning'); // Message updated
-        }
-        // updateSyncButton() REMOVED
-      }
-
-      // ========== LOADING INDICATORS ==========
-      function showTabLoading(tabName) {
-        const loadingEl = document.getElementById(`${tabName}-loading`);
-        if (loadingEl) loadingEl.style.display = 'inline-block';
-      }
-
-      function hideTabLoading(tabName) {
-        const loadingEl = document.getElementById(`${tabName}-loading`);
-        if (loadingEl) loadingEl.style.display = 'none';
-      }
-
-      // ========== REPORTS ==========
-        async function generateReport() {
-          const fromDate = document.getElementById('report-from').value;
-          const toDate = document.getElementById('report-to').value;
-
-          if (!fromDate || !toDate) {
-            showNotification('Please select both from and to dates', 'error');
+        // Generate Bill button
+        document.getElementById('generate-bill-btn').addEventListener('click', function() {
+          if (currentBillItems.length === 0) {
+            showNotification('No items in bill', 'error');
             return;
           }
 
-          saveReportFilters(fromDate, toDate);
-
-          try {
-            const store = tx(['sales']).objectStore('sales');
-            const allSales = await promisifyRequest(store.getAll());
-
-            const filteredSales = allSales.filter(sale => {
-              const saleDate = sale.date.split('T')[0];
-              return saleDate >= fromDate && saleDate <= toDate;
-            });
-
-            let totalSales = 0;
-            let totalProfit = 0;
-            let itemsSold = 0;
-
-            const tbody = document.getElementById('sales-history');
-            tbody.innerHTML = '';
-
-            if (filteredSales.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No sales data available for the selected period</td></tr>';
-            } else {
-              for (const sale of filteredSales) {
-                const product = window._productsCache.find(p => p.id === sale.productId);
-                const saleTotal = sale.quantity * sale.pricePerUnit;
-                const profit = product ? (sale.pricePerUnit - product.costPrice) * sale.quantity : 0;
-
-                totalSales += saleTotal;
-                totalProfit += profit;
-                itemsSold += sale.quantity;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                  <td>${new Date(sale.date).toLocaleDateString()}</td>
-                  <td>${product ? product.name.toUpperCase() : 'Unknown Product'}</td>
-                  <td>${sale.quantity}</td>
-                  <td>${formatCurrency(saleTotal)}</td>
-                  <td>${formatCurrency(profit)}</td>
-                `;
-                tbody.appendChild(tr);
-              }
-            }
-
-            document.getElementById('report-total-sales').textContent = formatCurrency(totalSales);
-            document.getElementById('report-total-profit').textContent = formatCurrency(totalProfit);
-            document.getElementById('report-items-sold').textContent = itemsSold;
-
-          } catch (err) {
-            console.error('Error generating report:', err);
-            showNotification('Error generating report', 'error');
-          }
-        }
-
-        // Save report filter parameters to localStorage
-        function saveReportFilters(fromDate, toDate) {
-          localStorage.setItem('lastReportFrom', fromDate);
-          localStorage.setItem('lastReportTo', toDate);
-        }
-
-        // Load report filter parameters from localStorage
-        function loadReportFilters() {
-          const fromDate = localStorage.getItem('lastReportFrom');
-          const toDate = localStorage.getItem('lastReportTo');
-
-          if (fromDate && toDate) {
-            document.getElementById('report-from').value = fromDate;
-            document.getElementById('report-to').value = toDate;
-          }
-        }
-
-     // ========== BACKUP & RESTORE ==========
-      // Update backup to include restocks
-      document.getElementById('export-json').addEventListener('click', async function() {
-        try {
-          // Get all data from IndexedDB
-          const products = await promisifyRequest(tx(['products']).objectStore('products').getAll());
-          const sales = await promisifyRequest(tx(['sales']).objectStore('sales').getAll());
-          const settings = await promisifyRequest(tx(['settings']).objectStore('settings').getAll());
-          const restocks = await promisifyRequest(tx(['restocks']).objectStore('restocks').getAll()); // NEW
-
-          const data = {
-            schemaVersion: 2, // Updated version
-            products,
-            sales,
-            settings,
-            restocks, // NEW
-            exportedAt: new Date().toISOString()
+          // Get customer info
+          const customerInfo = {
+            name: document.getElementById('customer-name').value,
+            phone: document.getElementById('customer-phone').value,
+            address: document.getElementById('customer-address').value
           };
 
-          // Create and download JSON file
-          const json = JSON.stringify(data, null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
+          generateBillFromItems(currentBillItems, customerInfo);
+        });
 
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `raj-enterprise-backup-${new Date().toISOString().split('T')[0]}.json`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+        // Sale form submission
+        document.getElementById('sale-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          await recordBillSale();
+        });
 
-          showNotification('Backup exported successfully');
-        } catch (err) {
-          console.error(err);
-          showNotification('Error exporting backup', 'error');
-        }
-      });
+        // Generate bill from existing sale
+        document.getElementById('generate-bill-from-sale').addEventListener('click', function() {
+          openSelectSalesModal();
+        });
 
-      // Update restore to include restocks
-      document.getElementById('file-input').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
+        // Generate bill from selected sales
+        document.getElementById('generate-bill-from-selected').addEventListener('click', function() {
+          const selectedSales = [];
+          document.querySelectorAll('.select-sale-checkbox:checked').forEach(checkbox => {
+            selectedSales.push(checkbox.dataset.id);
+          });
 
-        const reader = new FileReader();
-        reader.onload = async function(e) {
+          if (selectedSales.length === 0) {
+            showNotification('Please select at least one sale', 'error');
+            return;
+          }
+
+          generateBillForSelectedSales(selectedSales);
+          document.getElementById('select-sales-modal').style.display = 'none';
+        });
+
+        // Product form submission
+        document.getElementById('product-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          // Validate form
+          if (!validateRequiredInput(document.getElementById('product-name'), document.getElementById('name-error')) ||
+              !validateNumberInput(document.getElementById('product-quantity'), document.getElementById('init-qty-error'), 0) ||
+              !validateNumberInput(document.getElementById('product-cost'), document.getElementById('cost-error'), 0) ||
+              !validateNumberInput(document.getElementById('product-mrp'), document.getElementById('mrp-error'), 0) ||
+              !validateNumberInput(document.getElementById('product-tax'), document.getElementById('tax-error'), 0)) {
+            return;
+          }
+
+          // Add product
+          await addProduct({
+            name: document.getElementById('product-name').value,
+            quantity: Number(document.getElementById('product-quantity').value),
+            costPrice: Number(document.getElementById('product-cost').value),
+            mrp: Number(document.getElementById('product-mrp').value),
+            tax: Number(document.getElementById('product-tax').value)
+          });
+        });
+
+        // Edit product form submission
+        document.getElementById('edit-product-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          // Validate form
+          if (!validateRequiredInput(document.getElementById('edit-product-name'), document.getElementById('edit-name-error')) ||
+              !validateNumberInput(document.getElementById('edit-product-quantity'), document.getElementById('edit-qty-error'), 0) ||
+              !validateNumberInput(document.getElementById('edit-product-cost'), document.getElementById('edit-cost-error'), 0) ||
+              !validateNumberInput(document.getElementById('edit-product-mrp'), document.getElementById('edit-mrp-error'), 0) ||
+              !validateNumberInput(document.getElementById('edit-product-tax'), document.getElementById('edit-tax-error'), 0)) {
+            return;
+          }
+
+          // Update product
+          await updateProduct({
+            id: Number(document.getElementById('edit-product-id').value),
+            name: document.getElementById('edit-product-name').value,
+            quantity: Number(document.getElementById('edit-product-quantity').value),
+            costPrice: Number(document.getElementById('edit-product-cost').value),
+            mrp: Number(document.getElementById('edit-product-mrp').value),
+            tax: Number(document.getElementById('edit-product-tax').value)
+          });
+        });
+
+        // Edit sale form submission
+        document.getElementById('edit-sale-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          // Validate form
+          if (!validateNumberInput(document.getElementById('edit-sale-quantity'), document.getElementById('edit-sale-qty-error'), 0.01) ||
+              !validateNumberInput(document.getElementById('edit-sale-price'), document.getElementById('edit-sale-price-error'), 0.01)) {
+            return;
+          }
+
+          // Update sale
+          await updateSale({
+            id: document.getElementById('edit-sale-id').value,
+            productId: window._salesCache.find(s => s.id === document.getElementById('edit-sale-id').value).productId,
+            quantity: Number(document.getElementById('edit-sale-quantity').value),
+            pricePerUnit: Number(document.getElementById('edit-sale-price').value),
+            date: window._salesCache.find(s => s.id === document.getElementById('edit-sale-id').value).date
+          });
+        });
+
+        // Edit restock form submission
+        document.getElementById('edit-restock-form').addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          // Validate form
+          if (!validateNumberInput(document.getElementById('edit-restock-quantity'), document.getElementById('edit-restock-quantity-error'), 1) ||
+              !validateNumberInput(document.getElementById('edit-restock-cost'), document.getElementById('edit-restock-cost-error'), 0.01) ||
+              !validateNumberInput(document.getElementById('edit-restock-mrp'), document.getElementById('edit-restock-mrp-error'), 0.01)) {
+            return;
+          }
+
           try {
-            const data = JSON.parse(e.target.result);
+            const store = tx(['restocks', 'products'], 'readwrite');
+            const restocksStore = store.objectStore('restocks');
+            const productsStore = store.objectStore('products');
 
-            if (!data.products || !data.sales) {
-              throw new Error('Invalid backup file format');
+            const restockId = Number(document.getElementById('edit-restock-id').value);
+            const newQuantity = Number(document.getElementById('edit-restock-quantity').value);
+            const newCost = Number(document.getElementById('edit-restock-cost').value);
+            const newMRP = Number(document.getElementById('edit-restock-mrp').value);
+
+            // Get the original restock record
+            const restock = await promisifyRequest(restocksStore.get(restockId));
+
+            if (!restock) {
+              showNotification('Restock record not found', 'error');
+              return;
             }
 
-            // Import data into IndexedDB
-            const store = tx(['products', 'sales', 'settings', 'restocks'], 'readwrite'); // UPDATED
+            // Get the product
+            const product = await promisifyRequest(productsStore.get(restock.productId));
 
-            // Clear existing data
+            // Calculate the quantity difference
+            const quantityDiff = newQuantity - restock.quantityAdded;
+
+            // Update product quantity
+            product.quantity += quantityDiff;
+            product.costPrice = newCost;
+            product.mrp = newMRP;
+
+            await promisifyRequest(productsStore.put(product));
+
+            // Update the restock record
+            restock.quantityAdded = newQuantity;
+            restock.newCostPrice = newCost;
+            restock.newMRP = newMRP;
+
+            await promisifyRequest(restocksStore.put(restock));
+
+            showNotification('Restock record updated successfully');
+            document.getElementById('edit-restock-modal').style.display = 'none';
+
+            // Reload data
+            await loadProducts();
+            await loadLowStockAlerts();
+            computeDashboardMetrics();
+
+            // Reload restock history if we're on that tab
+            if (document.getElementById('restock-report').classList.contains('active')) {
+              loadRestockHistory();
+            }
+          } catch (err) {
+            console.error('Error updating restock:', err);
+            showNotification('Error updating restock record', 'error');
+          }
+        });
+
+        // Close modals
+        document.getElementById('close-edit-product').addEventListener('click', function() {
+          document.getElementById('edit-product-modal').style.display = 'none';
+        });
+
+        document.getElementById('close-edit-sale').addEventListener('click', function() {
+          document.getElementById('edit-sale-modal').style.display = 'none';
+        });
+
+        // Close bill modal
+        document.getElementById('close-bill').addEventListener('click', function() {
+          document.getElementById('bill-modal').style.display = 'none';
+        });
+
+        // Close select sales modal
+        document.getElementById('close-select-sales').addEventListener('click', function() {
+          document.getElementById('select-sales-modal').style.display = 'none';
+        });
+
+        // Print bill button
+        document.getElementById('print-bill-btn').addEventListener('click', printBill);
+
+        // Check online status
+        checkOnlineStatus();
+        window.addEventListener('online', checkOnlineStatus);
+        window.addEventListener('offline', checkOnlineStatus);
+
+        // Backup & Restore functionality
+        document.getElementById('export-json').addEventListener('click', async function() {
+          try {
+            // Get all data from IndexedDB
+            const products = await promisifyRequest(tx(['products']).objectStore('products').getAll());
+            const sales = await promisifyRequest(tx(['sales']).objectStore('sales').getAll());
+            const settings = await promisifyRequest(tx(['settings']).objectStore('settings').getAll());
+            const restocks = await promisifyRequest(tx(['restocks']).objectStore('restocks').getAll());
+
+            const data = {
+              schemaVersion: 2,
+              products,
+              sales,
+              settings,
+              restocks,
+              exportedAt: new Date().toISOString()
+            };
+
+            // Create and download JSON file
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `raj-enterprise-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('Backup exported successfully');
+          } catch (err) {
+            console.error(err);
+            showNotification('Error exporting backup', 'error');
+          }
+        });
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = async function(e) {
+            try {
+              const data = JSON.parse(e.target.result);
+
+              if (!data.products || !data.sales) {
+                throw new Error('Invalid backup file format');
+              }
+
+              // Import data into IndexedDB
+              const store = tx(['products', 'sales', 'settings', 'restocks'], 'readwrite');
+
+              // Clear existing data
+              await promisifyRequest(store.objectStore('products').clear());
+              await promisifyRequest(store.objectStore('sales').clear());
+              await promisifyRequest(store.objectStore('settings').clear());
+              if (data.restocks) {
+                await promisifyRequest(store.objectStore('restocks').clear());
+              }
+
+              // Add imported data
+              for (const product of data.products) {
+                product.name = product.name || 'Unnamed';
+                product.quantity = Number(product.quantity || 0);
+                await promisifyRequest(store.objectStore('products').put(product));
+              }
+
+              for (const sale of data.sales) {
+                sale.quantity = Number(sale.quantity || 0);
+                sale.pricePerUnit = Number(sale.pricePerUnit || 0);
+                await promisifyRequest(store.objectStore('sales').put(sale));
+              }
+
+              if (data.settings) {
+                for (const setting of data.settings) {
+                  await promisifyRequest(store.objectStore('settings').put(setting));
+                }
+              }
+
+              // Import restocks if available
+              if (data.restocks) {
+                for (const restock of data.restocks) {
+                  await promisifyRequest(store.objectStore('restocks').put(restock));
+                }
+              }
+
+              showNotification('Backup imported successfully');
+
+              // Reload all data
+              await loadInitialData();
+            } catch (err) {
+              console.error(err);
+              showNotification('Error importing backup', 'error');
+            }
+          };
+          reader.readAsText(file);
+        });
+
+        document.getElementById('clear-db').addEventListener('click', async function() {
+          if (!confirm('Are you sure you want to clear all data? This action cannot be undone.')) return;
+
+          try {
+            const store = tx(['products', 'sales', 'settings', 'restocks'], 'readwrite');
+
             await promisifyRequest(store.objectStore('products').clear());
             await promisifyRequest(store.objectStore('sales').clear());
             await promisifyRequest(store.objectStore('settings').clear());
-            if (data.restocks) { // NEW
-              await promisifyRequest(store.objectStore('restocks').clear());
-            }
+            await promisifyRequest(store.objectStore('restocks').clear());
 
-            // Add imported data
-            for (const product of data.products) {
-              product.name = product.name || 'Unnamed';
-              product.quantity = Number(product.quantity || 0);
-              await promisifyRequest(store.objectStore('products').put(product));
-            }
-
-            for (const sale of data.sales) {
-              sale.quantity = Number(sale.quantity || 0);
-              sale.pricePerUnit = Number(sale.pricePerUnit || 0);
-              await promisifyRequest(store.objectStore('sales').put(sale));
-            }
-
-            if (data.settings) {
-              for (const setting of data.settings) {
-                await promisifyRequest(store.objectStore('settings').put(setting));
-              }
-            }
-
-            // NEW: Import restocks if available
-            if (data.restocks) {
-              for (const restock of data.restocks) {
-                await promisifyRequest(store.objectStore('restocks').put(restock));
-              }
-            }
-
-            showNotification('Backup imported successfully');
+            showNotification('All data cleared successfully');
 
             // Reload all data
             await loadInitialData();
           } catch (err) {
             console.error(err);
-            showNotification('Error importing backup', 'error');
-          }
-        };
-        reader.readAsText(file);
-      });
-
-      document.getElementById('clear-db').addEventListener('click', async function() {
-        if (!confirm('Are you sure you want to clear all data? This action cannot be undone.')) return;
-
-        try {
-          const store = tx(['products', 'sales', 'settings', 'restocks'], 'readwrite'); // Added restocks
-
-          await promisifyRequest(store.objectStore('products').clear());
-          await promisifyRequest(store.objectStore('sales').clear());
-          await promisifyRequest(store.objectStore('settings').clear());
-          await promisifyRequest(store.objectStore('restocks').clear()); // Clear restocks table
-
-          showNotification('All data cleared successfully');
-
-          // Reload all data
-          await loadInitialData();
-        } catch (err) {
-          console.error(err);
-          showNotification('Error clearing data', 'error');
-        }
-      });
-
-      // ========== PWA SERVICE WORKER ==========
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          // Only register service worker if served over HTTPS or localhost
-          if (window.location.hostname === 'localhost' || window.location.protocol === 'https:') {
-            navigator.serviceWorker.register('sw.js').then(function(registration) {
-              console.log('SW registered: ', registration);
-            }).catch(function(registrationError) {
-              console.log('SW registration failed: ', registrationError);
-            });
+            showNotification('Error clearing data', 'error');
           }
         });
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            // Only register service worker if served over HTTPS or localhost
+            if (window.location.hostname === 'localhost' || window.location.protocol === 'https:') {
+              navigator.serviceWorker.register('sw.js').then(function(registration) {
+                console.log('SW registered: ', registration);
+              }).catch(function(registrationError) {
+                console.log('SW registration failed: ', registrationError);
+              });
+            }
+          });
+        }
+
+        // Check if app is running as PWA
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+          console.log('Running as standalone app!');
+          document.body.classList.add('standalone-app');
+        }
+
+      } catch (err) {
+        console.error('Failed to initialize app:', err);
+        showNotification('Failed to initialize application', 'error');
+      }
+    });
+
+    // ========== ONLINE STATUS ==========
+    function checkOnlineStatus() {
+      const connectionEl = document.getElementById('connection');
+      const connText = document.getElementById('conn-text');
+
+      if (navigator.onLine) {
+        connectionEl.classList.remove('offline');
+        connectionEl.classList.add('online');
+        connText.textContent = 'Online';
+      } else {
+        connectionEl.classList.remove('online');
+        connectionEl.classList.add('offline');
+        connText.textContent = 'Offline';
+        showNotification('Working offline. Data saved locally.', 'warning');
+      }
+    }
+
+    // ========== LOADING INDICATORS ==========
+    function showTabLoading(tabName) {
+      const loadingEl = document.getElementById(`${tabName}-loading`);
+      if (loadingEl) loadingEl.style.display = 'inline-block';
+    }
+
+    function hideTabLoading(tabName) {
+      const loadingEl = document.getElementById(`${tabName}-loading`);
+      if (loadingEl) loadingEl.style.display = 'none';
+    }
+
+    // ========== REPORTS ==========
+    async function generateReport() {
+      const fromDate = document.getElementById('report-from').value;
+      const toDate = document.getElementById('report-to').value;
+
+      if (!fromDate || !toDate) {
+        showNotification('Please select both from and to dates', 'error');
+        return;
       }
 
-      // Check if app is running as PWA
-      if (window.matchMedia('(display-mode: standalone)').matches) {
-        console.log('Running as standalone app!');
-        document.body.classList.add('standalone-app');
+      saveReportFilters(fromDate, toDate);
+
+      try {
+        // Use the sales cache which is populated from Firestore
+        const allSales = window._salesCache || [];
+        
+        const filteredSales = allSales.filter(sale => {
+          if (!sale.date) return false;
+          const saleDate = sale.date.split('T')[0];
+          return saleDate >= fromDate && saleDate <= toDate;
+        });
+
+        let totalSales = 0;
+        let totalProfit = 0;
+        let itemsSold = 0;
+
+        const tbody = document.getElementById('sales-history');
+        tbody.innerHTML = '';
+
+        if (filteredSales.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No sales data available for the selected period</td></tr>';
+        } else {
+          for (const sale of filteredSales) {
+            const product = window._productsCache.find(p => p.id === sale.productId);
+            const saleTotal = sale.quantity * sale.pricePerUnit;
+            const profit = product ? (sale.pricePerUnit - product.costPrice) * sale.quantity : 0;
+
+            totalSales += saleTotal;
+            totalProfit += profit;
+            itemsSold += sale.quantity;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = 
+              `<td>${new Date(sale.date).toLocaleDateString()}</td>
+              <td>${product ? product.name.toUpperCase() : 'Unknown Product'}</td>
+              <td>${sale.quantity}</td>
+              <td>${formatCurrency(saleTotal)}</td>
+              <td>${formatCurrency(profit)}</td>`;
+            tbody.appendChild(tr);
+          }
+        }
+
+        document.getElementById('report-total-sales').textContent = formatCurrency(totalSales);
+        document.getElementById('report-total-profit').textContent = formatCurrency(totalProfit);
+        document.getElementById('report-items-sold').textContent = itemsSold;
+
+      } catch (err) {
+        console.error('Error generating report:', err);
+        showNotification('Error generating report', 'error');
       }
+    }
 
-      // Initialize offline queue REMOVED
-      // window.offlineQueue = []; REMOVED
+    // Save report filter parameters to localStorage
+    function saveReportFilters(fromDate, toDate) {
+      localStorage.setItem('lastReportFrom', fromDate);
+      localStorage.setItem('lastReportTo', toDate);
+    }
 
-      // Function to process queued actions when coming back online REMOVED
-      // processOfflineQueue REMOVED
+    // Load report filter parameters from localStorage
+    function loadReportFilters() {
+      const fromDate = localStorage.getItem('lastReportFrom');
+      const toDate = localStorage.getItem('lastReportTo');
 
-      // Manual sync button REMOVED
-      // document.getElementById('manual-sync').addEventListener('click', function() { ... }); REMOVED
-      // window.addEventListener('online', processOfflineQueue); REMOVED
-
-      // Show/hide sync button based on offline queue REMOVED
-      // function updateSyncButton() { ... } REMOVED
+      if (fromDate && toDate) {
+        document.getElementById('report-from').value = fromDate;
+        document.getElementById('report-to').value = toDate;
+      }
+    }
 </script>
 </body>
-
 </html>
-
-
-
