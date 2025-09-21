@@ -11,6 +11,8 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
       import { getFirestore, collection, onSnapshot, addDoc, getDocs, doc, updateDoc, deleteDoc  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+      import { collection, onSnapshot } from 'firebase/firestore';
+      import { db } from './firebase-config'; // Assuming your Firestore instance is exported from here
       const firebaseConfig = {
         apiKey: "AIzaSyAOW9WOH4i6_T29Kfz0fEW-HIr0Fih_yjU",
         authDomain: "raj-enterprises-4a9b1.firebaseapp.com",
@@ -24,12 +26,12 @@
       const db = getFirestore(app);
 
        // 🔄 Firestore listener
-  async function loadSales() {
+    async function loadSales() {
     showTabLoading('sales');
     try {
-      const salesRef = collection(db, "sales"); // ✅ collection is imported above
+      const salesCollection = collection(db, "sales"); // ✅ collection is imported above
 
-      onSnapshot(salesRef, (snapshot) => {
+      onSnapshot(salesCollection, (snapshot) => {
         const sales = [];
         snapshot.forEach((docSnap) => {
           sales.push({ id: docSnap.id, ...docSnap.data() });
@@ -1221,9 +1223,9 @@
     async function loadSales() {
     showTabLoading('sales');
     try {
-      const salesRef = collection(db, "sales");
+      const salesCollection = collection(db, "sales");
 
-      onSnapshot(salesRef, (snapshot) => {
+      salesCollection.onSnapshot((snapshot) => {
         const sales = [];
         snapshot.forEach((docSnap) => {
           sales.push({ id: docSnap.id, ...docSnap.data() });
