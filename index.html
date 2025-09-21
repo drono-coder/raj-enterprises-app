@@ -1193,41 +1193,35 @@
 
     // ========== FIRESTORE SALES INTEGRATION ==========
     async function loadSales() {
-      showTabLoading('sales');
-      try {
-        // Use Firestore for real-time updates
-        const { onSnapshot, collection, db } = window.firestore;
-        
-        onSnapshot(collection(db, "sales"), (snapshot) => {
-          const sales = [];
-          snapshot.forEach((doc) => {
-            sales.push({ id: doc.id, ...doc.data() });
-          });
-          
-          window._salesCache = sales;
-          displayTodaySales(sales);
-          displayAllSales(sales);
-          hideTabLoading('sales');
-          
-          // Update sync status
-          updateFirestoreStatus(true, "Connected to Cloud");
-        }, (error) => {
-          console.error("Firestore error:", error);
-          hideTabLoading('sales');
-          updateFirestoreStatus(false, "Sync error - using local data");
-          
-          // Fallback to IndexedDB if Firestore fails
-          loadSalesFromIndexedDB();
+    showTabLoading('sales');
+    try {
+      const salesRef = collection(db, "sales");
+
+      onSnapshot(salesRef, (snapshot) => {
+        const sales = [];
+        snapshot.forEach((docSnap) => {
+          sales.push({ id: docSnap.id, ...docSnap.data() });
         });
-      } catch (error) {
-        console.error("Error setting up Firestore listener:", error);
+
+        window._salesCache = sales;
+        displayTodaySales(sales);
+        displayAllSales(sales);
         hideTabLoading('sales');
-        updateFirestoreStatus(false, "Offline - using local data");
-        
-        // Fallback to IndexedDB
+        updateFirestoreStatus(true, "Connected to Cloud");
+      }, (error) => {
+        console.error("Firestore error:", error);
+        hideTabLoading('sales');
+        updateFirestoreStatus(false, "Sync error - using local data");
         loadSalesFromIndexedDB();
-      }
+      });
+
+    } catch (error) {
+      console.error("Error setting up Firestore listener:", error);
+      hideTabLoading('sales');
+      updateFirestoreStatus(false, "Offline - using local data");
+      loadSalesFromIndexedDB();
     }
+  }
     
     // Fallback function to load sales from IndexedDB
     async function loadSalesFromIndexedDB() {
@@ -2978,6 +2972,7 @@
 </script>
 </body>
 </html>
+
 
 
 
