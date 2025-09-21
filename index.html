@@ -11,7 +11,8 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
       import { getFirestore, collection, onSnapshot, addDoc, getDocs, doc, updateDoc, deleteDoc  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-      import { collection, onSnapshot } from 'firebase/firestore';
+      import { collection2, onSnapshot } from 'firebase/firestore';
+      import { collection, onSnapshot } from "firebase/firestore";
       import { db } from './firebase-config'; // Assuming your Firestore instance is exported from here
       const firebaseConfig = {
         apiKey: "AIzaSyAOW9WOH4i6_T29Kfz0fEW-HIr0Fih_yjU",
@@ -29,7 +30,7 @@
     async function loadSales() {
     showTabLoading('sales');
     try {
-      const salesCollection = collection(db, "sales"); // ✅ collection is imported above
+      const salesCollection = collection2(db, "sales"); // ✅ collection is imported above
 
       onSnapshot(salesCollection, (snapshot) => {
         const sales = [];
@@ -1029,7 +1030,8 @@
     // ========== Load / Display ==========
     async function loadInitialData(){
       await loadProducts();
-      await loadSales(); // Now uses Firestore
+      await loadTodaySales();
+      await loadAllSalesHistory();
       await loadLowStockAlerts();
       computeDashboardMetrics();
     }
@@ -1223,8 +1225,10 @@
     async function loadSales() {
     showTabLoading('sales');
     try {
-      const salesCollection = collection(db, "sales");
+      const { getFirestore, collection, onSnapshot } = getFirestore(app);
+      const db = getFirestore(app);
 
+      const salesCollection = collection(db, "sales");
       salesCollection.onSnapshot((snapshot) => {
         const sales = [];
         snapshot.forEach((docSnap) => {
