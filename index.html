@@ -907,36 +907,36 @@
     // ========== IndexedDB Setup ==========
     const DB_NAME = 'RajEnterpriseDB';
     const DB_VERSION = 3;
-  let idb = null;
+    let db = null;
 
     function openDB(){
       return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onerror = (e) => reject(e.target.error);
         request.onupgradeneeded = (e) => {
-          idb = e.target.result;
-          if (!idb.objectStoreNames.contains('products')) {
-            const products = idb.createObjectStore('products', { keyPath:'id', autoIncrement:true });
+          db = e.target.result;
+          if (!db.objectStoreNames.contains('products')) {
+            const products = db.createObjectStore('products', { keyPath:'id', autoIncrement:true });
             products.createIndex('name', 'name', { unique:false });
           }
-          if (!idb.objectStoreNames.contains('sales')) {
+          if (!db.objectStoreNames.contains('sales')) {
             // We'll keep this for offline fallback but use Firestore primarily
-            const sales = idb.createObjectStore('sales', { keyPath:'id', autoIncrement:true });
+            const sales = db.createObjectStore('sales', { keyPath:'id', autoIncrement:true });
             sales.createIndex('date', 'date', { unique:false });
             sales.createIndex('productId', 'productId', { unique:false });
           }
-          if (!idb.objectStoreNames.contains('settings')) {
-            idb.createObjectStore('settings', { keyPath:'id' });
+          if (!db.objectStoreNames.contains('settings')) {
+            db.createObjectStore('settings', { keyPath:'id' });
           }
-          if (!idb.objectStoreNames.contains('restocks')) {
-            const restocks = idb.createObjectStore('restocks', { keyPath:'id', autoIncrement:true });
+          if (!db.objectStoreNames.contains('restocks')) {
+            const restocks = db.createObjectStore('restocks', { keyPath:'id', autoIncrement:true });
             restocks.createIndex('productId', 'productId', { unique:false });
             restocks.createIndex('date', 'date', { unique:false });
           }
         };
         request.onsuccess = (e) => {
-          idb = e.target.result;
-          resolve(idb);
+          db = e.target.result;
+          resolve(db);
           setTimeout(checkOnlineStatus, 100);
         };
       });
@@ -944,7 +944,7 @@
 
     // helpers
     function tx(storeNames, mode='readonly'){
-  return idb.transaction(storeNames, mode);
+      return db.transaction(storeNames, mode);
     }
 
     function promisifyRequest(request){
