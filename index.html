@@ -1199,14 +1199,13 @@
         hideTabLoading('sales');
         updateFirestoreStatus(true, "Connected to Cloud");
       }, (error) => {
-        console.error("Firestore error:", error);
+        
         hideTabLoading('sales');
         updateFirestoreStatus(false, "Sync error - using local data");
         loadSalesFromIndexedDB();
       });
 
     } catch (error) {
-      console.error("Error setting up Firestore listener:", error);
       hideTabLoading('sales');
       updateFirestoreStatus(false, "Offline - using local data");
       loadSalesFromIndexedDB();
