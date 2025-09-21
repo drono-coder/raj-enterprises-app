@@ -1006,6 +1006,10 @@
         displayProducts(products);
         window._productsCache = products;
         updateStockValue(products);
+        // ✅ Trigger metrics update here too
+        if (window._salesCache) {
+          computeDashboardMetrics();
+        }
       } finally {
         hideTabLoading('stock');
       }
@@ -1221,6 +1225,10 @@
         window._salesCache = sales;
         displayTodaySales(sales);
         displayAllSales(sales);
+        // ✅ Trigger metrics update here (only when data is ready)
+        if (window._productsCache) {
+          computeDashboardMetrics();
+        }
       } catch (err) {
         console.error("Error loading sales from IndexedDB:", err);
         showNotification('Error loading sales', 'error');
