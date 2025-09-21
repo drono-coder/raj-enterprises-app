@@ -23,17 +23,6 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
-      // Expose Firestore functions to window for use in non-module scripts
-      window._firestore = {
-        db,
-        collection,
-        onSnapshot,
-        addDoc,
-        getDocs,
-        doc,
-        updateDoc,
-        deleteDoc
-      };
     </script>
 
     <link rel="manifest" href="manifest.json">
@@ -1196,7 +1185,6 @@
     async function loadSales() {
     showTabLoading('sales');
     try {
-      const { db, collection, onSnapshot } = window._firestore;
       const salesRef = collection(db, "sales");
 
       onSnapshot(salesRef, (snapshot) => {
