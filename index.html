@@ -22,7 +22,7 @@
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
-        
+
        // 🔄 Firestore listener
   async function loadSales() {
     showTabLoading('sales');
@@ -59,7 +59,6 @@
     await openDB();
     await loadInitialData();
   });
-
     </script>
 
     <link rel="manifest" href="manifest.json">
@@ -933,36 +932,36 @@
     // ========== IndexedDB Setup ==========
     const DB_NAME = 'RajEnterpriseDB';
     const DB_VERSION = 3;
-    let db = null;
+    let indexedDBInstance = null;
 
     function openDB(){
       return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onerror = (e) => reject(e.target.error);
         request.onupgradeneeded = (e) => {
-          db = e.target.result;
-          if (!db.objectStoreNames.contains('products')) {
-            const products = db.createObjectStore('products', { keyPath:'id', autoIncrement:true });
+          indexedDBInstance = e.target.result;
+          if (!indexedDBInstance.objectStoreNames.contains('products')) {
+            const products = indexedDBInstance.createObjectStore('products', { keyPath:'id', autoIncrement:true });
             products.createIndex('name', 'name', { unique:false });
           }
-          if (!db.objectStoreNames.contains('sales')) {
+          if (!indexedDBInstance.objectStoreNames.contains('sales')) {
             // We'll keep this for offline fallback but use Firestore primarily
-            const sales = db.createObjectStore('sales', { keyPath:'id', autoIncrement:true });
+            const sales = indexedDBInstance.createObjectStore('sales', { keyPath:'id', autoIncrement:true });
             sales.createIndex('date', 'date', { unique:false });
             sales.createIndex('productId', 'productId', { unique:false });
           }
-          if (!db.objectStoreNames.contains('settings')) {
-            db.createObjectStore('settings', { keyPath:'id' });
+          if (!indexedDBInstance.objectStoreNames.contains('settings')) {
+            indexedDBInstance.createObjectStore('settings', { keyPath:'id' });
           }
-          if (!db.objectStoreNames.contains('restocks')) {
-            const restocks = db.createObjectStore('restocks', { keyPath:'id', autoIncrement:true });
+          if (!indexedDBInstance.objectStoreNames.contains('restocks')) {
+            const restocks = indexedDBInstance.createObjectStore('restocks', { keyPath:'id', autoIncrement:true });
             restocks.createIndex('productId', 'productId', { unique:false });
             restocks.createIndex('date', 'date', { unique:false });
           }
         };
         request.onsuccess = (e) => {
-          db = e.target.result;
-          resolve(db);
+          indexedDBInstance = e.target.result;
+          resolve(indexedDBInstance);
           setTimeout(checkOnlineStatus, 100);
         };
       });
@@ -970,7 +969,7 @@
 
     // helpers
     function tx(storeNames, mode='readonly'){
-      return db.transaction(storeNames, mode);
+      return indexedDBInstance.transaction(storeNames, mode);
     }
 
     function promisifyRequest(request){
@@ -2999,13 +2998,3 @@
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
