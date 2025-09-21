@@ -11,8 +11,6 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
       import { getFirestore, collection, onSnapshot, addDoc, getDocs, doc, updateDoc, deleteDoc  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-      import { collection, onSnapshot } from "firebase/firestore";
-      import { db } from './firebase-config'; // Assuming your Firestore instance is exported from here
       const firebaseConfig = {
         apiKey: "AIzaSyAOW9WOH4i6_T29Kfz0fEW-HIr0Fih_yjU",
         authDomain: "raj-enterprises-4a9b1.firebaseapp.com",
@@ -25,42 +23,6 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
-       // 🔄 Firestore listener
-    async function loadSales() {
-    showTabLoading('sales');
-    try {
-      const salesCollection = collection(db, "sales"); // ✅ collection is imported above
-
-      onSnapshot(salesCollection, (snapshot) => {
-        const sales = [];
-        snapshot.forEach((docSnap) => {
-          sales.push({ id: docSnap.id, ...docSnap.data() });
-        });
-
-        window._salesCache = sales;
-        displayTodaySales(sales);
-        displayAllSales(sales);
-        hideTabLoading('sales');
-        updateFirestoreStatus(true, "Connected to Cloud");
-      }, (error) => {
-        console.error("Firestore error:", error);
-        hideTabLoading('sales');
-        updateFirestoreStatus(false, "Sync error - using local data");
-        loadSalesFromIndexedDB();
-      });
-
-    } catch (error) {
-      console.error("Error setting up Firestore listener:", error);
-      hideTabLoading('sales');
-      updateFirestoreStatus(false, "Offline - using local data");
-      loadSalesFromIndexedDB();
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", async () => {
-    await openDB();
-    await loadInitialData();
-  });
     </script>
 
     <link rel="manifest" href="manifest.json">
@@ -1029,11 +991,7 @@
     // ========== Load / Display ==========
     async function loadInitialData(){
       await loadProducts();
-      await loadSales();
-      await loadRestocks();
-      await loadSettings();
-      await loadTodaySales();
-      await loadAllSalesHistory();
+      await loadSales(); // Now uses Firestore
       await loadLowStockAlerts();
       computeDashboardMetrics();
     }
@@ -1227,11 +1185,9 @@
     async function loadSales() {
     showTabLoading('sales');
     try {
-      const { getFirestore, collection, onSnapshot } = getFirestore(app);
-      const db = getFirestore(app);
+      const salesRef = collection(db, "sales");
 
-      const salesCollection = collection(db, "sales");
-      salesCollection.onSnapshot((snapshot) => {
+      onSnapshot(salesRef, (snapshot) => {
         const sales = [];
         snapshot.forEach((docSnap) => {
           sales.push({ id: docSnap.id, ...docSnap.data() });
