@@ -1,11 +1,11 @@
 {
-  "name": "Raj Enterprise",
-  "short_name": "Raj Enterprise",
-  "start_url": ".",
+  "name": "Raj Enterprise - Firebase Enabled",
+  "short_name": "RajEnterprise",
+  "description": "Stock & Sales Management with Firebase sync",
+  "start_url": "./firebase_app_definitive.html",
   "display": "standalone",
-  "background_color": "#f5f7fa",
-  "theme_color": "#3498db",
-  "description": "Stock & Sales Management for Raj Enterprise",
+  "background_color": "#3498db",
+  "theme_color": "#2c3e50",
   "icons": [
   {
     "src": "icons/icons-192x192.png",
